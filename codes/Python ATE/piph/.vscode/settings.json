@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "c:\\Users\\jbaduria\\Documents\\Repository\\piph\\venv\\Scripts\\python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "terminal.integrated.shellArgs.windows": [
+        "-ExecutionPolicy",
+        "Bypass"
+    ]
+}

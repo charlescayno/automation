@@ -1,0 +1,267 @@
+from piph.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+
+import time
+
+def headers(test_name):
+    print("*"*50)
+    print(f"Test: {test_name}")
+
+def footers(time_elapsed):
+    print("Finished")
+    if time_elapsed<60:
+        print(f"Time Elapsed: {time_elapsed} second(s)")
+    elif time_elapsed<3600:
+        print(f"Time Elapsed: {time_elapsed/60:.2f} minute(s)")
+    else:
+        print(f"Time Elapsed: {time_elapsed/3600:.2f} hour(s)")
+    print("*"*50)
+    print("")
+
+def soak(soak_time):
+    for seconds in range(soak_time, 0, -1):
+        time.sleep(1)
+        print(f"{seconds:5d}s", end="\r")
+    print("       ", end="\r")
+
+def reset():
+    ac.off()
+    eload.channel[1].cc = 0.5
+    eload.channel[1].on()
+    time.sleep(5)
+    eload.channel[1].off()
+
+def test_no_load(input_list, soak_time, integration_time):
+    headers("No Load")
+    start_time = time.time()
+    for voltage, frequency in input_list:
+        ac.voltage = voltage
+        ac.frequency = frequency
+        ac.on()
+
+        soak(soak_time)
+        pm1.integrate(integration_time)
+
+        # create output list
+        vac = str(voltage)
+        freq = str(frequency)
+        vin = f"{pm1.voltage:.2f}"
+        iin = f"{pm1.current*1000:.2f}"
+        pin = f"{pm1.power:.5f}"
+        pf = f"{pm1.pf:.4f}"
+        output_list = [vac, freq, vin, iin, pin, pf]
+
+        print(','.join(output_list))
+    end_time = time.time()
+    reset()
+    footers(end_time-start_time)
+
+def test_line_regulation(input_list, soak_time):
+    headers("Line Regulation")
+    start_time = time.time()
+    for voltage, frequency in input_list:
+        ac.voltage = voltage
+        ac.frequency = frequency
+        ac.on()
+
+        eload.channel[1].cc = 1.25
+        eload.channel[1].on()
+
+        soak(soak_time)
+
+        # create output list
+        vac = str(voltage)
+        freq = str(frequency)
+        vin = f"{pm1.voltage:.2f}"
+        iin = f"{pm1.current*1000:.2f}"
+        pin = f"{pm1.power:.3f}"
+        pf = f"{pm1.pf:.4f}"
+        thd = f"{pm1.thd:.2f}"
+        vo1 = f"{pm2.voltage:.3f}"
+        io1 = f"{pm2.current*1000:.2f}"
+        po1 = f"{pm2.power:.3f}"
+        vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
+        eff = f"{100*(float(po1))/float(pin):.4f}"
+
+        output_list = [vac, freq, vin, iin, pin, pf, thd, vo1, io1, po1, vreg1, eff]
+
+        print(','.join(output_list))
+    end_time = time.time()
+    reset()
+    footers(end_time-start_time)
+
+def test_load_regulation(input_list, load_percent_list, line_soak_time, load_soak_time):
+    headers("Load Regulation")
+    start_time = time.time()
+    for voltage, frequency in input_list:
+        ac.voltage = voltage
+        ac.frequency = frequency
+        ac.on()
+        eload.channel[1].cc = 1.25
+        eload.channel[1].on()
+        soak(line_soak_time)
+        for load_percent in load_percent_list:
+            eload.channel[1].cc = 1.25 * (load_percent / 100)
+            eload.channel[1].on()
+            soak(load_soak_time)
+
+            # create output list
+            vac = str(voltage)
+            freq = str(frequency)
+            vin = f"{pm1.voltage:.2f}"
+            iin = f"{pm1.current*1000:.2f}"
+            pin = f"{pm1.power:.3f}"
+            pf = f"{pm1.pf:.4f}"
+            thd = f"{pm1.thd:.2f}"
+            vo1 = f"{pm2.voltage:.3f}"
+            io1 = f"{pm2.current*1000:.2f}"
+            po1 = f"{pm2.power:.3f}"
+            vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
+            eff = f"{100*(float(po1))/float(pin):.4f}"
+
+            output_list = [vac, freq, vin, iin, pin, pf, thd, vo1, io1, po1, vreg1, eff]
+
+            print(','.join(output_list))
+        print("")
+    end_time = time.time()
+    reset()
+    footers(end_time-start_time)
+
+def test_average_efficiency(input_list, line_soak_time, load_soak_time):
+    headers("Average Efficiency")
+    start_time = time.time()
+    for voltage, frequency in input_list:
+        ac.voltage = voltage
+        ac.frequency = frequency
+        ac.on()
+        eload.channel[1].cc = 1.25
+        eload.channel[1].on()
+        soak(line_soak_time)
+        for load_percent in [100, 75, 50, 25, 10]:
+            eload.channel[1].cc = 1.25 * (load_percent / 100)
+            eload.channel[1].on()
+            soak(load_soak_time)
+
+            # create output list
+            vac = str(voltage)
+            freq = str(frequency)
+            vin = f"{pm1.voltage:.2f}"
+            iin = f"{pm1.current*1000:.2f}"
+            pin = f"{pm1.power:.3f}"
+            pf = f"{pm1.pf:.4f}"
+            thd = f"{pm1.thd:.2f}"
+            vo1 = f"{pm2.voltage:.3f}"
+            io1 = f"{pm2.current*1000:.2f}"
+            po1 = f"{pm2.power:.3f}"
+            vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
+            eff = f"{100*(float(po1))/float(pin):.4f}"
+
+            output_list = [vac, freq, vin, iin, pin, pf, thd, vo1, io1, po1, vreg1, eff]
+
+            print(','.join(output_list))
+        print("")
+    end_time = time.time()
+    reset()
+    footers(end_time-start_time)
+
+def test_standby_power(voltage_list, frequency_list, power_list):
+    headers("Standby Power")
+    start_time = time.time()
+    for power in power_list:
+        eload.channel[1].cc = 1.25
+        eload.channel[1].on()
+        time.sleep(5)
+        eload.channel[1].off()
+
+        for voltage, frequency in zip(voltage_list, frequency_list):
+            ac.voltage = voltage
+            ac.frequency = frequency
+            ac.on()
+
+
+            low = 0
+            high = 1
+            while low < high:
+                mid = (low+high)/2
+                eload.channel[1].cc = 1.25*mid
+                eload.channel[1].on()
+                time.sleep(5)
+
+                while True:
+                    input_power = pm1.power
+                    if input_power is not None:
+                        break
+                    time.sleep(5)
+
+                if abs(power-input_power)<0.01*power:
+                    success = True
+                    break
+                elif input_power>power:
+                    high = mid
+                elif input_power<power:
+                    low = mid
+            
+            if success:
+                # create output list
+                vac = str(voltage)
+                freq = str(frequency)
+                vin = f"{pm1.voltage:.2f}"
+                iin = f"{pm1.current*1000:.2f}"
+                pin = f"{pm1.power:.3f}"
+                pf = f"{pm1.pf:.4f}"
+                thd = f"{pm1.thd:.2f}"
+                vo1 = f"{pm2.voltage:.3f}"
+                io1 = f"{pm2.current*1000:.2f}"
+                po1 = f"{pm2.power:.3f}"
+                vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
+                eff = f"{100*(float(po1))/float(pin):.4f}"
+
+                output_list = [vac, freq, vin, iin, pin, pf, thd, vo1, io1, po1, vreg1, eff]
+
+                print(','.join(output_list))
+            else:
+                print("None")
+            eload.channel[1].off()
+        print("")
+
+    end_time = time.time()
+    reset()
+    footers(end_time-start_time)
+
+ac = ACSource(address=5)
+pm1 = PowerMeter(address=1)
+pm2 = PowerMeter(address=2)
+eload = ElectronicLoad(address=8)
+
+# User inputs start here
+input_list = [(115, 60), (230, 50)]   # (voltage, frequency)
+line_soak_time = 10                     # seconds
+load_soak_time = 6
+# User inputs end here
+
+
+test_no_load([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)], 
+    soak_time = 900,
+    integration_time = 60
+)
+test_line_regulation([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)],
+    soak_time = 900,
+)
+test_load_regulation([(90, 60), (115, 60), (230, 50), (265, 50)], 
+    load_percent_list = range(100, -10, -10), 
+    line_soak_time = 900, 
+    load_soak_time = 60,
+)
+test_load_regulation([(90, 60), (115, 60), (230, 50), (265, 50)], 
+    load_percent_list = range(10, -1, -1), 
+    line_soak_time = 300, 
+    load_soak_time = 60,
+)
+test_average_efficiency([(115, 60), (230, 50)],
+    line_soak_time = 900,
+    load_soak_time = 180,
+)
+
+test_standby_power(voltage_list=[90,115,230,265],
+            frequency_list=[60,60,50,50],
+            power_list=[0.3, 0.5, 1, 2, 3]
+)
