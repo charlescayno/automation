@@ -1,6 +1,7 @@
 # @cfcayno
 from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
 from time import sleep, time
+import os
 
 # Equipment Address
 # ac = ACSource(address=5)
@@ -13,10 +14,10 @@ from time import sleep, time
 #########################################################################################
 # TEST PARAMETERS
 # TODO: Load the desired Output Voltage Ripple dfl
-# trigger settings
-trig_lvl = 0.01  # starting trigger level
-trig_delta = 0.003 # [V]
-trig_src = 1    # CH1
+# set trigger settings
+trig_lvl = 0.01     # [V] starting trigger level
+trig_src = 1        # CH1
+trig_delta = 0.003  # [V] // describes how reactive the trigger automation
 # INPUT
 vin = [85, 115, 230, 265]
 freq = [60, 60, 50, 50]
@@ -24,9 +25,9 @@ freq = [60, 60, 50, 50]
 Iout_max = 2 # Amps
 Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0.10*Iout_max]
 Iout_name = [100, 75, 50, 25, 10]
-# IC
-IC = 'SEC#4'
-# IC = 'LAPISS2#33'
+# select IC under test
+IC = 'SEC#4 (FAB)'
+# IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
 
@@ -41,7 +42,19 @@ def headers(test_name):
   # initialization
   waveform_counter = 0
   Iout_index = 0
+
   waveforms_folder = f'waveforms/{test_name}'
+
+  # creating folder for the saved waveforms
+  pathname = f"{os.getcwd()}\{waveforms_folder}"
+  isExist = os.path.exists(pathname)
+
+  if isExist == False:
+    os.mkdir(pathname)
+    print(f"{waveforms_folder} created.")
+  else:
+    print(f"{waveforms_folder} folder already exists.")
+
   start = time()
   print()
 
@@ -51,8 +64,6 @@ def footers():
   end = time()
   print()
   print(f'test time: {(end-start)/60} mins.')
-
-
 
 def find_trigger():
   # finding trigger level
@@ -102,6 +113,7 @@ def percent_load():
     ac.voltage = voltage
     ac.frequency = frequency
     ac.turn_on()
+    
     for x in Iout:
       eload.channel[1].cc = x
       eload.channel[1].turn_on()
@@ -118,7 +130,8 @@ def percent_load():
       # get screenshot
       scope.run_single()
       sleep(6)
-      scope.get_screenshot(filename=f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png', path=f'{waveforms_folder}')
+      filename = f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png'
+      scope.get_screenshot(filename, waveforms_folder)
       print(f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png')
       
       Iout_index += 1
@@ -138,12 +151,8 @@ def percent_load():
   eload.channel[1].turn_off()
 
 
-
-
-
-
-
+## main code ##
 headers("Output Ripple")
 # init_trigger()
-print()
+# percent_load()
 footers()
