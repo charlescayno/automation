@@ -1,9 +1,9 @@
 # automation
-This repository includes all of the code for bench automation.
+this repository includes all of the code for bench automation.
 
-# Purpose
-1. Consistent waveforms for Fab Transfer Activities.
-2. Faster testing for procedural waveform gathering.
+# purpose
+1. consistent waveforms for fab transfer Activities.
+2. faster testing for procedural waveform gathering.
 
 
 
