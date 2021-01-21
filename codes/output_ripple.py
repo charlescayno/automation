@@ -15,7 +15,6 @@ trigger_source = 1            # CH1
 voltages = [85, 115, 230, 265]
 frequencies = [60, 60, 50, 50]
 
-
 # OUTPUT
 Imax = 2
 current = [Imax, 0.75*Imax, 0.50*Imax, 0.25*Imax, 0.10*Imax]              # Amps
@@ -29,7 +28,6 @@ current_name = [100, 75, 50, 25, 10]
 # IC
 IC = 'SEC#4'
 # IC = 'LAPISS2#33'
-
 
 # NOTE: Load the desired Output Voltage Ripple dfl
 #########################################################################################
