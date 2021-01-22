@@ -11,8 +11,10 @@ the following test procedures are currently supported:
 
 # TODO
 - clean the following:
-        - Vds Ids Normal Operation
-        - Vds Ids Startup Operation
-        - Vds
-        - 
+
+1. Vds Ids Normal Operation
+2. Vds Ids Startup Operation
+3. BPP Normal Operation
+4. BPP Startup Operation
+5. Load Transient
 
