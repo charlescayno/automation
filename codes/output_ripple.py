@@ -5,10 +5,10 @@ from time import sleep, time
 import os
 
 # Equipment Address
-ac = ACSource(address=5)
-pms = PowerMeter(address=5)
-pml = PowerMeter(address=5)
-eload = ElectronicLoad(address=5)
+# ac = ACSource(address=5)
+# pms = PowerMeter(address=5)
+# pml = PowerMeter(address=5)
+# eload = ElectronicLoad(address=5)
 scope = Oscilloscope(address='10.125.10.139')
 
 # USER INPUT STARTS HERE
@@ -135,11 +135,11 @@ def reset_trigger_level():
 def reset():
   global Iout_index
   Iout_index = 0
-  ac.turn_off()
-  eload.channel[1].cc = 1
-  eload.channel[1].turn_on()
-  eload.channel[2].cc = 1
-  eload.channel[2].turn_on()
+  # ac.turn_off()
+  # eload.channel[1].cc = 1
+  # eload.channel[1].turn_on()
+  # eload.channel[2].cc = 1
+  # eload.channel[2].turn_on()
   sleep(5)
   print()
 
@@ -156,8 +156,8 @@ def percent_load():
     # ac.turn_on()
     
     for x in Iout:
-      eload.channel[1].cc = x
-      eload.channel[1].turn_on()
+      # eload.channel[1].cc = x
+      # eload.channel[1].turn_on()
       
       # if x == 0:
       #   sleep(10)
@@ -167,13 +167,40 @@ def percent_load():
       # find_trigger()
       # scope.run_single()
       # sleep(6)
-      get_screenshot()
+      # get_screenshot()
       # reset_trigger_level()
-
+      print()
     reset()
 
 
+def test():
+  # print("hello")
+  # labels, values = scope.get_measure()
+  # print(labels)
+  # print(values)
+
+  # result = scope.get_measure_all()
+  # print(type(result))
+  
+  # print(result[0])
+  # print(type(result[0]))
+
+  # dictio = result[0]
+  # print(type(dictio))
+
+  # print(result[0]['channel'])
+
+  scope.stop()
+  # # scope.run()
+  sleep(2)
+  # scope.query_ascii_values('FORM ')
+  data = scope.save_channel_data(1)
+  print(data)
+
 ## main code ##
-headers("Output Ripple")
-percent_load()
-footers()
+# headers("Output Ripple")
+# percent_load()
+# footers()
+
+
+test()
