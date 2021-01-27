@@ -8,8 +8,10 @@ document = MailMerge(template)
 print(document.get_merge_fields())
 
 document.merge(
-        vds = 'vds waveforms',
-        ids = 'ids waveforms'
+        vds = 'vds label',
+        ids = 'ids label'
 )
+
+
 
 document.write('template1.docx')
