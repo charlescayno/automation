@@ -1,17 +1,17 @@
 # @cfcayno
 # last mod: 22Jan2021
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
+# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
 from time import sleep, time
 import os
 
 # Equipment Address
-ac = ACSource(address=5)
-pms = PowerMeter(address=1)
-pm1 = PowerMeter(address=1)
-pml = PowerMeter(address=4)
-pm2 = PowerMeter(address=4)
-eload = ElectronicLoad(address=16)
-scope = Oscilloscope(address='10.125.10.139')
+# ac = ACSource(address=5)
+# pms = PowerMeter(address=1)
+# pm1 = PowerMeter(address=1)
+# pml = PowerMeter(address=4)
+# pm2 = PowerMeter(address=4)
+# eload = ElectronicLoad(address=16)
+# scope = Oscilloscope(address='10.125.10.139')
 
 # USER INPUT STARTS HERE
 #########################################################################################
@@ -256,6 +256,26 @@ def test_line_regulation(input_list, soak_time):
 
 
 # test()
-test_line_regulation([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)],
-    soak_time = 5,
-)
+# test_line_regulation([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)],
+#     soak_time = 5,
+# )
+
+soak(5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# git config --unset credential.helper
