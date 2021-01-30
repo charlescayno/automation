@@ -12,6 +12,4 @@ document.merge(
         ids = 'ids label'
 )
 
-
-
 document.write('template1.docx')

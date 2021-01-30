@@ -5,10 +5,12 @@ from time import sleep, time
 import os
 
 # Equipment Address
-# ac = ACSource(address=5)
-# pms = PowerMeter(address=5)
-# pml = PowerMeter(address=5)
-# eload = ElectronicLoad(address=5)
+ac = ACSource(address=5)
+pms = PowerMeter(address=1)
+pm1 = PowerMeter(address=1)
+pml = PowerMeter(address=4)
+pm2 = PowerMeter(address=4)
+eload = ElectronicLoad(address=16)
 scope = Oscilloscope(address='10.125.10.139')
 
 # USER INPUT STARTS HERE
@@ -197,10 +199,63 @@ def test():
   data = scope.save_channel_data(1)
   print(data)
 
+
+
+
+def soak(soak_time):
+  for seconds in range(soak_time, 0, -1):
+      sleep(1)
+      print(f"{seconds:5d}s", end="\r")
+  print("       ", end="\r")
+
+
+def test_line_regulation(input_list, soak_time):
+  headers("Line Regulation")
+
+  print("Vac, Freq, Vin, Iin, Pin, PF, %THD, Vo1, Io1, Po1, Vreg1, Eff")
+
+  for voltage, frequency in input_list:
+    ac.voltage = voltage
+    ac.frequency = frequency
+    ac.turn_on()
+
+    eload.channel[1].cc = 1
+    eload.channel[1].turn_on()
+
+    soak(soak_time)
+
+    # create output list
+    vac = str(voltage)
+    freq = str(frequency)
+    vin = f"{pm1.voltage:.2f}"
+    iin = f"{pm1.current*1000:.2f}"
+    pin = f"{pm1.power:.3f}"
+    pf = f"{pm1.pf:.4f}"
+    thd = f"{pm1.thd:.2f}"
+    vo1 = f"{pm2.voltage:.3f}"
+    io1 = f"{pm2.current*1000:.2f}"
+    po1 = f"{pm2.power:.3f}"
+    vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
+    eff = f"{100*(float(po1))/float(pin):.4f}"
+
+    output_list = [vac, freq, vin, iin, pin, pf, thd, vo1, io1, po1, vreg1, eff]
+
+    print(','.join(output_list))
+
+  reset()
+  footers()
+
+
+
+
+
 ## main code ##
 # headers("Output Ripple")
 # percent_load()
 # footers()
 
 
-test()
+# test()
+test_line_regulation([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)],
+    soak_time = 5,
+)
