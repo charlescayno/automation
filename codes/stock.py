@@ -15,6 +15,7 @@ o = float(sys.argv[3]) # exit price
 bal = float(P*(o/i)-P)
 bal = truncate(bal,4)
 bal = float(bal)
+
 percent = float(bal/P*100)
 percent = truncate(percent,2)
 percent = float(percent)
@@ -27,6 +28,3 @@ if bal > 0:
 else:
 	print(f'Losses: {bal}')
 	print(f'%Losses: {percent}%')
-
-
-
