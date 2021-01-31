@@ -1,25 +1,11 @@
-# @cfcayno
-# last mod: 22Jan2021
-# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
-from time import sleep, time
-import os
-
-# Equipment Address
-# ac = ACSource(address=5)
-# pms = PowerMeter(address=1)
-# pm1 = PowerMeter(address=1)
-# pml = PowerMeter(address=4)
-# pm2 = PowerMeter(address=4)
-# eload = ElectronicLoad(address=16)
-# scope = Oscilloscope(address='10.125.10.139')
-
+# git config --unset credential.helper
 # USER INPUT STARTS HERE
 #########################################################################################
 # TEST PARAMETERS
 # TODO: Load the desired Output Voltage Ripple dfl
 # set trigger settings
-trigger_level = 0.01     # [V] starting trigger level
-trigger_source = 1        # CH1
+trigger_level = 0.01   # [V] starting trigger level
+trigger_source = 1     # CH1
 trigger_delta = 0.003  # [V] // describes how reactive the trigger automation
 
 # INPUT
@@ -38,23 +24,38 @@ IC = 'test'
 #########################################################################################
 # USER INPUT ENDS HERE
 
+from time import sleep, time
+import os
+
+def init_equipment():
+  from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
+  ac = ACSource(address=5)
+  pms = PowerMeter(address=1)
+  pml = PowerMeter(address=4)
+  eload = ElectronicLoad(address=16)
+  scope = Oscilloscope(address='10.125.10.139')
+
 def headers(test_name):
+
   print()
   print("="*50)
   print(f"Test: {test_name}")
   
-  global waveforms_folder
+  # initialization
   global waveform_counter
   global Iout_index
   global start
-  
-  # initialization
   waveform_counter = 0
   Iout_index = 0
 
-  waveforms_folder = f'waveforms/{test_name}'
+  create_folder(test_name)
+  start = time()
+  print()
 
+def create_folder(test_name):
+  global waveforms_folder
   # creating folder for the saved waveforms
+  waveforms_folder = f'waveforms/{test_name}'
   pathname = f"{os.getcwd()}\{waveforms_folder}"
   isExist = os.path.exists(pathname)
 
@@ -64,20 +65,17 @@ def headers(test_name):
   else:
     print(f"{waveforms_folder} folder already exists.")
 
-  start = time()
-  print()
-
 def footers():
   print(f'{waveform_counter} waveforms captured.')
   print('test complete.')
-  end = time()
   print()
+  end = time()
   print(f'test time: {(end-start)/60} mins.')
 
 def find_trigger():
   # finding trigger level
   scope.run_single()
-  sleep(5)
+  soak(5)
 
   # get initial peak-to-peak measurement value
   labels, values = scope.get_measure()
@@ -92,7 +90,7 @@ def find_trigger():
 
   # check initial trigger status
   scope.run_single()
-  sleep(5)
+  soak(5)
   trigger_status = scope.trigger_status()
 
   # increase trigger level until it reaches the maximum
@@ -102,7 +100,7 @@ def find_trigger():
     
     # check trigger status
     scope.run_single()
-    sleep(3)
+    soak(3)
     trigger_status = scope.trigger_status()
 
   # decrease one trigger level below to get the maximum trigger possible
@@ -122,8 +120,8 @@ def get_screenshot():
   global waveforms_folder
   
   # get screenshot
-  # scope.run_single()
-  # sleep(6)
+  scope.run_single()
+  soak(6)
   filename = f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png'
   scope.get_screenshot(filename, waveforms_folder)
   print(f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png')
@@ -137,70 +135,42 @@ def reset_trigger_level():
 def reset():
   global Iout_index
   Iout_index = 0
-  # ac.turn_off()
-  # eload.channel[1].cc = 1
-  # eload.channel[1].turn_on()
-  # eload.channel[2].cc = 1
-  # eload.channel[2].turn_on()
-  sleep(5)
+  ac.turn_off()
+  eload.channel[1].cc = 1
+  eload.channel[1].turn_on()
+  eload.channel[2].cc = 1
+  eload.channel[2].turn_on()
+  soak(5)
   print()
 
 def percent_load():
 
-  # init_trigger()
+  init_trigger()
 
   global voltage
   global frequency
   for voltage, frequency in zip(vin, freq):
     
-    # ac.voltage = voltage
-    # ac.frequency = frequency
-    # ac.turn_on()
+    ac.voltage = voltage
+    ac.frequency = frequency
+    ac.turn_on()
     
     for x in Iout:
-      # eload.channel[1].cc = x
-      # eload.channel[1].turn_on()
+      eload.channel[1].cc = x
+      eload.channel[1].turn_on()
       
-      # if x == 0:
-      #   sleep(10)
-      # else:
-      #   sleep(5)
+      if x == 0:
+        soak(10)
+      else:
+        soak(5)
       
-      # find_trigger()
-      # scope.run_single()
-      # sleep(6)
-      # get_screenshot()
-      # reset_trigger_level()
+      find_trigger()
+      scope.run_single()
+      soak(6)
+      get_screenshot()
+      reset_trigger_level()
       print()
     reset()
-
-
-def test():
-  # print("hello")
-  # labels, values = scope.get_measure()
-  # print(labels)
-  # print(values)
-
-  # result = scope.get_measure_all()
-  # print(type(result))
-  
-  # print(result[0])
-  # print(type(result[0]))
-
-  # dictio = result[0]
-  # print(type(dictio))
-
-  # print(result[0]['channel'])
-
-  scope.stop()
-  # # scope.run()
-  sleep(2)
-  # scope.query_ascii_values('FORM ')
-  data = scope.save_channel_data(1)
-  print(data)
-
-
-
 
 def soak(soak_time):
   for seconds in range(soak_time, 0, -1):
@@ -208,8 +178,8 @@ def soak(soak_time):
       print(f"{seconds:5d}s", end="\r")
   print("       ", end="\r")
 
-
 def test_line_regulation(input_list, soak_time):
+  
   headers("Line Regulation")
 
   print("Vac, Freq, Vin, Iin, Pin, PF, %THD, Vo1, Io1, Po1, Vreg1, Eff")
@@ -227,14 +197,14 @@ def test_line_regulation(input_list, soak_time):
     # create output list
     vac = str(voltage)
     freq = str(frequency)
-    vin = f"{pm1.voltage:.2f}"
-    iin = f"{pm1.current*1000:.2f}"
-    pin = f"{pm1.power:.3f}"
-    pf = f"{pm1.pf:.4f}"
-    thd = f"{pm1.thd:.2f}"
-    vo1 = f"{pm2.voltage:.3f}"
-    io1 = f"{pm2.current*1000:.2f}"
-    po1 = f"{pm2.power:.3f}"
+    vin = f"{pms.voltage:.2f}"
+    iin = f"{pms.current*1000:.2f}"
+    pin = f"{pms.power:.3f}"
+    pf = f"{pms.pf:.4f}"
+    thd = f"{pms.thd:.2f}"
+    vo1 = f"{pml.voltage:.3f}"
+    io1 = f"{pml.current*1000:.2f}"
+    po1 = f"{pml.power:.3f}"
     vreg1 = f"{100*(float(vo1)-12)/12:.4f}"
     eff = f"{100*(float(po1))/float(pin):.4f}"
 
@@ -245,34 +215,14 @@ def test_line_regulation(input_list, soak_time):
   reset()
   footers()
 
-
-
-
-
 ## main code ##
+# init_equipment()
 # headers("Output Ripple")
 # percent_load()
 # footers()
 
 
-# test()
-# test_line_regulation([(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)],
-#     soak_time = 5,
-# )
+# input_list = [(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)]
+# soak_time = 5
+# test_line_regulation(input_list, soak_time)
 
-soak(5)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# git config --unset credential.helper
