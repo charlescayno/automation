@@ -80,9 +80,11 @@ def find_trigger():
   # get initial peak-to-peak measurement value
   labels, values = scope.get_measure()
   ptp_value = float(values[1])
-  ptp_value = truncate(ptp_value, 4)
+  # ptp_value = truncate(ptp_value, 4)
+  ptp_value = float(f"{ptp_value:.4f}")
   max_value = float(values[0])
-  max_value = truncate(max_value, 4)
+  # max_value = truncate(max_value, 4)
+  max_value = float(f"{max_value:.4f}")
 
   # set max_value as initial trigger level
   trigger_level = max_value
@@ -225,4 +227,3 @@ def test_line_regulation(input_list, soak_time):
 # input_list = [(90, 60), (100, 60), (115, 60), (130, 60), (150, 60), (180, 60), (200, 50), (220, 50), (230, 50), (240, 50), (250, 60), (265, 50)]
 # soak_time = 5
 # test_line_regulation(input_list, soak_time)
-
