@@ -112,7 +112,11 @@ for i in temp:
 
 a = scope.get_horizontal()
 resolution = float(a["resolution"])
-cursor1 = resolution*w
+
+minimum = float(a["scale"])*(-5)
+# print(str(minimum)
+
+cursor1 = resolution*w + minimum
 print(str(cursor1))
 
 
