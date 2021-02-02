@@ -124,6 +124,33 @@ scope.write("CURS1:SOUR C2W1")
 scope.write(f"CURS1:X1P {cursor1}")
 scope.write("CURS1:X2P 0")
 
+startup_time = scope.get_cursor()
+startup_time = startup_time["delta x"]
+print(f"startup time = {startup_time} s")
+
+
+
+
+
+# PS C:\Users\ccayno\automation\codes> python .\testosci.py
+# ['Max', 'RMS']
+# ['5.691699604743e-02', '4.721091785857e-02']
+# {'channel': '2', 'scale': '0.2', 'position': '-4', 'offset': '0', 'coupling': 'DCL', 'bandwidth': 'FULL'}
+# {'scale': '0.0001', 'position': '0', 'resolution': '2E-09', 'sample rate': '500000000'}
+# {'x1 position': '-0.000499998', 'x2 position': '0', 'y1 position': '0.71', 'y2 position': '0.89', 'delta x': '0.000499998', 'delta y': '0.18', 'source': 'C2W1'}
+
+
+# Time Scale: 0.0001 s/div
+# Position: 50%
+# <class 'str'>
+# 500000
+# <class 'list'>
+# 500000
+# @sample: 1
+# -0.000499998
+# PS C:\Users\ccayno\automation\codes>
+
+
 
 
 
