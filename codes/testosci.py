@@ -86,26 +86,41 @@ scope.run()
 soak(1)
 scope.stop()
 
-# f = scope.save_channel_data(2)
-# print(f)
 
 scope.write('FORM ASC')
-# scope.write('FORM:DATA INT,16')
 scope.write('EXP:WAV:INCX OFF')
-f=scope.write('CHAN2:WAV1:DATA?')
-print(len(f))
-print(type(f))
-g = list(f.split(","))
-print(len(g))
-print(type(g))
-# print(g[0:100])
-
+data = scope.write('CHAN2:WAV1:DATA?')
+print(type(data)) # string
+## changing string data to list data
+data = list(data.split(","))
+print(len(data))
+print(type(data))
 temp = []
-
-for h in g:
+for h in data:
         h = float(h)
         h = f"{h:.4f}"
         temp.append(h)
-print(temp)
+print(len(temp))
+w = 0
+
+for i in temp:
+        i = float(i)
+        w+=1
+        if i>0.04:
+                print("@sample: " + str(w))
+                break
+
+a = scope.get_horizontal()
+resolution = float(a["resolution"])
+cursor1 = resolution*w
+print(str(cursor1))
+
+
+scope.write("CURS1:SOUR C2W1")
+scope.write(f"CURS1:X1P {cursor1}")
+scope.write("CURS1:X2P 0")
+
+
+
 
 # print(f)
