@@ -3,7 +3,7 @@
 # Tuesday
 - [x] Line Regulation (Unit#3)
 - [x] No Load (Unit#3)
-- [] Line Regulation (Unit#1)
+- [ ] Line Regulation (Unit#1)
 
 
 
