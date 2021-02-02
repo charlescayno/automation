@@ -78,11 +78,34 @@ print(e)
 print()
 print()
 
-scope.time_scale(0.1)
+scope.time_scale(0.0001)
 scope.time_position(50)
+# scope.resolution(0.1)
 scope.display_intensity(100)
 scope.run()
-soak(2)
+soak(1)
+scope.stop()
 
-f = scope.save_channel_data(2)
-print(f)
+# f = scope.save_channel_data(2)
+# print(f)
+
+scope.write('FORM ASC')
+# scope.write('FORM:DATA INT,16')
+scope.write('EXP:WAV:INCX OFF')
+f=scope.write('CHAN2:WAV1:DATA?')
+print(len(f))
+print(type(f))
+g = list(f.split(","))
+print(len(g))
+print(type(g))
+# print(g[0:100])
+
+temp = []
+
+for h in g:
+        h = float(h)
+        h = f"{h:.4f}"
+        temp.append(h)
+print(temp)
+
+# print(f)
