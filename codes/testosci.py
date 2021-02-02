@@ -63,7 +63,11 @@ def soak(soak_time):
         print("       ", end="\r")
 
 ## main code ##
+
+
 init_equipment()
+
+
 scope.stop()
 a,b = scope.get_measure(2)
 print (a)
@@ -86,27 +90,26 @@ scope.run()
 soak(1)
 scope.stop()
 
-
 scope.write('FORM ASC')
 scope.write('EXP:WAV:INCX OFF')
-data = scope.write('CHAN2:WAV1:DATA?')
-print(type(data)) # string
-## changing string data to list data
-data = list(data.split(","))
+data = scope.write('CHAN2:WAV1:DATA?') # type: string
+data = list(data.split(",")) # type: list
+
 print(len(data))
 print(type(data))
+
 temp = []
 for h in data:
         h = float(h)
         h = f"{h:.4f}"
+        h = float(h)
         temp.append(h)
 print(len(temp))
-w = 0
 
+pos = 0
 for i in temp:
-        i = float(i)
-        w+=1
-        if i>0.04:
+        pos += 1
+        if i > 85:
                 print("@sample: " + str(w))
                 break
 
@@ -114,9 +117,8 @@ a = scope.get_horizontal()
 resolution = float(a["resolution"])
 
 minimum = float(a["scale"])*(-5)
-# print(str(minimum)
 
-cursor1 = resolution*w + minimum
+cursor1 = resolution*pos + minimum
 print(str(cursor1))
 
 
