@@ -7,19 +7,19 @@
 - [x] Line Regulation [49V, 39V, 36V, 32V, 24V]
 - [x] Line Regulation (without RSET) [49V, 36V, 24V]
 - [ ] No Load
-- [ ] lightload
+- [ ] light load
 - [x] Burn-in Test
 #### Unit#2
 - [ ] Line Regulation [49V, 39V, 36V, 32V, 24V]
 - [ ] Line Regulation (without RSET) [49V, 36V, 24V]
 - [ ] No Load
-- [ ] lightload
+- [ ] light load
 - [ ] Burn-in Test
 #### Unit#3
 - [x] Line Regulation [49V, 39V, 36V, 32V, 24V]
 - [ ] Line Regulation (without RSET) [49V, 36V, 24V]
 - [x] No Load
-- [x] lightload
+- [x] light load
 - [ ] Burn-in Test
 
 # todo:
