@@ -64,7 +64,7 @@ def soak(soak_time):
 
 ## main code ##
 
-
+start = time()
 init_equipment()
 
 
@@ -82,7 +82,7 @@ print(e)
 print()
 print()
 
-scope.time_scale(0.0001)
+# scope.time_scale(0.001)
 scope.time_position(50)
 # scope.resolution(0.1)
 scope.display_intensity(100)
@@ -109,17 +109,18 @@ print(len(temp))
 pos = 0
 for i in temp:
         pos += 1
-        if i > 85:
-                print("@sample: " + str(w))
+        if i > 0.96:
+                print("@sample: " + str(pos))
                 break
 
 a = scope.get_horizontal()
 resolution = float(a["resolution"])
-
 minimum = float(a["scale"])*(-5)
-
 cursor1 = resolution*pos + minimum
-print(str(cursor1))
+print()
+print(str(temp[pos])+ " V")
+print("X1P: " + str(cursor1) + " s")
+print()
 
 
 scope.write("CURS1:SOUR C2W1")
@@ -131,8 +132,8 @@ startup_time = startup_time["delta x"]
 print(f"startup time = {startup_time} s")
 
 
-
-
+end=time()
+print(f'test time: {(end-start)} s.')
 
 # PS C:\Users\ccayno\automation\codes> python .\testosci.py
 # ['Max', 'RMS']
@@ -151,6 +152,9 @@ print(f"startup time = {startup_time} s")
 # @sample: 1
 # -0.000499998
 # PS C:\Users\ccayno\automation\codes>
+
+
+# 5Msa - 12s
 
 
 

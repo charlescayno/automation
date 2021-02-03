@@ -4,23 +4,25 @@
 ### Tuesday
 
 #### Unit#1
-- [x] Line Regulation [49V, 39V, 36V, 32V, 24V]
+- [x] Line Regulation [46V, 39V, 36V, 32V, 24V]
 - [x] Line Regulation (without RSET) [49V, 36V, 24V]
 - [x] No Load
 - [x] light load
-- [x] Burn-in Test
+- [x] Burn-in Test 90VOR
+- [ ] Burn-in Test 100VOR
+
 #### Unit#2
-- [ ] Line Regulation [49V, 39V, 36V, 32V, 24V]
+- [x] Line Regulation [46V, 39V, 36V, 32V, 24V]
 - [x] Line Regulation (without RSET) [49V, 36V, 24V]
-- [ ] No Load
-- [ ] light load
-- [ ] Burn-in Test
-#### Unit#3
-- [x] Line Regulation [49V, 39V, 36V, 32V, 24V]
-- [ ] Line Regulation (without RSET) [49V, 36V, 24V]
 - [x] No Load
 - [x] light load
-- [ ] Burn-in Test
+- [ ] Burn-in Test 100VOR
+#### Unit#3
+- [x] Line Regulation [46V, 39V, 36V, 32V, 24V]
+- [x] Line Regulation (without RSET) [49V, 36V, 24V]
+- [x] No Load
+- [x] light load
+- [ ] Burn-in Test 100VOR
 
 # todo:
 - Line Regulation (include comparison between old and the new transformer)
