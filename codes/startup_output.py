@@ -28,6 +28,7 @@ def reminders():
   print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
   print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
   print("> Set CH3 = Output Current (Current Probe)")
+  print("> Set position to 30%")
   print()
   input("Press ENTER to continue...")
 
@@ -174,8 +175,7 @@ def startup_cc():
       ####################################################
 
       data = scope.get_chan_data(1) # get input voltage waveform data points
-      print()
-
+      
       ## search for the time of startup
       index_ctr = 0
       lim = 126 # 127V (90*sqrt(2)=127V)
@@ -189,7 +189,7 @@ def startup_cc():
       
       a = scope.get_horizontal()
       resolution = float(a["resolution"])
-      minimum = float(a["scale"])*(-5) # set the cursor to the leftmost part of the screen
+      minimum = float(a["scale"])*(-3) # set the cursor to the leftmost part of the screen
                                        # assuming position at 50%
       
       cursor1 = minimum + resolution*pos_x1
