@@ -1,20 +1,19 @@
 # USER INPUT STARTS HERE
 #########################################################################################
-# TEST PARAMETERS
-# set trigger settings
+## TEST PARAMETERS
+## set trigger settings
 trigger_level = 20   # [V] set to the output voltage
-trigger_source = 1     # CH1
-trigger_delta = 0.003  # [V] // describes how reactive the trigger automation
-# INPUT
-vin = [85,115,230,265]
+trigger_source = 2   # CH2 = Output Voltage
+## INPUT
+vin = [90,115,230,265]
 freq = [60,60,50,50]
-# OUTPUT
-Iout_max = 2 # Amps
-Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0.10*Iout_max]
-Iout_name = [100, 75, 50, 25, 10]
-# select IC to test
+## OUTPUT
+Iout_max = 2 # A
+Iout = [Iout_max, 0.50*Iout_max]
+Iout_name = [100, 50]
+## select IC to test
+# IC = 'test'
 # IC = 'SEC#4 (FAB)'
-IC = 'test'
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
@@ -152,7 +151,7 @@ def startup_90degPhase(voltage,frequency):
 def startup_cc():
 
   init_trigger()
-  scope.trigger_level(2, trigger_level) 
+  scope.trigger_level(trigger_source, trigger_level) 
 
   global voltage
   global frequency
