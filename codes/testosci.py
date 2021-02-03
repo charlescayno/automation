@@ -72,6 +72,8 @@ scope.stop()
 a,b = scope.get_measure(2)
 print (a)
 print (b)
+Iout_max = float(b[0])
+Iout_min = float(b[1])
 c = scope.get_vertical(2)
 print(c)
 d = scope.get_horizontal()
@@ -82,56 +84,78 @@ print(e)
 print()
 print()
 
-# scope.time_scale(0.001)
-scope.time_position(50)
-# scope.resolution(0.1)
-scope.display_intensity(100)
-scope.run()
-soak(1)
-scope.stop()
 
-scope.write('FORM ASC')
-scope.write('EXP:WAV:INCX OFF')
-data = scope.write('CHAN2:WAV1:DATA?') # type: string
-data = list(data.split(",")) # type: list
+# ## scope settings
+# scope.time_scale(0.005)
+# scope.time_position(50)
+# # scope.resolution(30E-9)
+# scope.display_intensity(100)
 
-print(len(data))
-print(type(data))
+# # scope.run()
+# soak(1)
+# scope.stop()
 
-temp = []
-for h in data:
-        h = float(h)
-        h = f"{h:.4f}"
-        h = float(h)
-        temp.append(h)
-print(len(temp))
+# sleep(2)
 
-pos = 0
-for i in temp:
-        pos += 1
-        if i > 0.96:
-                print("@sample: " + str(pos))
+data = scope.get_chan_data(2)
+
+
+with open('waveform.txt', 'w') as f:
+    for item in data:
+        f.write("%s\n" % item)
+
+maximuminlist = max(data)
+print(maximuminlist)
+max_index = data.index(maximuminlist)
+print(max_index)
+minimuminlist = min(data)
+print(minimuminlist)
+min_index = data.index(minimuminlist)
+print(min_index)
+
+print()
+
+## search where it first happen
+j = 0
+lim = 0.8
+pos_x1 = 0
+pos_x2 = 0
+for i in data:
+        if i == maximuminlist:
+                pos_x1 = j
+                print(i)
+                print(pos_x1)
                 break
+        j += 1
+
+j = 0
+for i in data:
+        if i == minimuminlist:
+                pos_x2 = j
+                print(i)
+                print(pos_x2)
+                break
+        j += 1
+print()
 
 a = scope.get_horizontal()
 resolution = float(a["resolution"])
 minimum = float(a["scale"])*(-5)
-cursor1 = resolution*pos + minimum
+cursor1 = minimum + resolution*pos_x1
+cursor2 = minimum + resolution*pos_x2
+print("Y1: " + str(data[pos_x1])+ " V")
+print("X1: " + str(cursor1) + " s")
+print("Y2: " + str(data[pos_x2])+ " V")
+print("X2: " + str(cursor2) + " s")
 print()
-print(str(temp[pos])+ " V")
-print("X1P: " + str(cursor1) + " s")
-print()
 
+scope.cursor(channel=2, cursor_set=1, X1=cursor1, X2=cursor2)
+scope.cursor(channel=2, cursor_set=2, X1=cursor1, X2=cursor2)
 
-scope.write("CURS1:SOUR C2W1")
-scope.write(f"CURS1:X1P {cursor1}")
-scope.write("CURS1:X2P 0")
-
-startup_time = scope.get_cursor()
-startup_time = startup_time["delta x"]
+startup_time = scope.get_cursor()["delta x"]
 print(f"startup time = {startup_time} s")
 
-
+print()
 end=time()
 print(f'test time: {(end-start)} s.')
 
