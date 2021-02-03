@@ -100,9 +100,9 @@ print()
 data = scope.get_chan_data(2)
 
 
-with open('waveform.txt', 'w') as f:
-    for item in data:
-        f.write("%s\n" % item)
+# with open('waveform.txt', 'w') as f:
+#     for item in data:
+#         f.write("%s\n" % item)
 
 maximuminlist = max(data)
 print(maximuminlist)
