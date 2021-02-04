@@ -30,7 +30,8 @@ import os
 def init_equipment():
         global scope
         from powi.equipment import Oscilloscope
-        scope = Oscilloscope(address='10.125.10.139')
+        # scope = Oscilloscope(address='10.125.10.139') # charles
+        scope = Oscilloscope(address='10.125.10.156') # Joshua
 
 def init_trigger():
         # Trigger Settings
@@ -69,12 +70,12 @@ init_equipment()
 
 
 scope.stop()
-a,b = scope.get_measure(2)
+a,b = scope.get_measure(1)
 print (a)
 print (b)
 Iout_max = float(b[0])
 Iout_min = float(b[1])
-c = scope.get_vertical(2)
+c = scope.get_vertical(1)
 print(c)
 d = scope.get_horizontal()
 print(d)
@@ -91,13 +92,13 @@ print()
 # # scope.resolution(30E-9)
 # scope.display_intensity(100)
 
-# # scope.run()
-# soak(1)
-# scope.stop()
+scope.run()
+soak(1)
+scope.stop()
 
 # sleep(2)
 
-data = scope.get_chan_data(2)
+data = scope.get_chan_data(1)
 
 
 # with open('waveform.txt', 'w') as f:
@@ -105,42 +106,44 @@ data = scope.get_chan_data(2)
 #         f.write("%s\n" % item)
 
 maximuminlist = max(data)
-print(maximuminlist)
+# print(maximuminlist)
 max_index = data.index(maximuminlist)
-print(max_index)
+# print(max_index)
 minimuminlist = min(data)
-print(minimuminlist)
+# print(minimuminlist)
 min_index = data.index(minimuminlist)
-print(min_index)
+# print(min_index)
 
 print()
 
 ## search where it first happen
 j = 0
-lim = 0.8
+lim = 0
 pos_x1 = 0
 pos_x2 = 0
 for i in data:
-        if i == maximuminlist:
-                pos_x1 = j
-                print(i)
-                print(pos_x1)
+        # if i > 0.5:
+        #         print(f"================      {i}      " + str(data[j-1]))
+        # else:
+        #         print(f"|                     {i}      " + str(data[j-1]))
+        if i > 0.5 and data[j-1] < 0.5: # low to high transition
+                lim += 1
+                pos_x2 = j-1
+        if i < 0.5 and data[j-1] > 0.5: # high to low transition
+                lim += 1
+                pos_x1 = j-1
+        if pos_x1 > 0 and pos_x2 > 0:
                 break
         j += 1
 
-j = 0
-for i in data:
-        if i == minimuminlist:
-                pos_x2 = j
-                print(i)
-                print(pos_x2)
-                break
-        j += 1
+print()
+print(f"Number of low-to-high transition: {lim}")
 print()
 
 a = scope.get_horizontal()
 resolution = float(a["resolution"])
 minimum = float(a["scale"])*(-5)
+minimum = 0
 cursor1 = minimum + resolution*pos_x1
 cursor2 = minimum + resolution*pos_x2
 print("Y1: " + str(data[pos_x1])+ " V")
