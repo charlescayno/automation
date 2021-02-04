@@ -18,8 +18,8 @@ Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0.10*Iout_max]
 Iout_name = [100, 75, 50, 25, 10]
 
 # select IC to test
-# IC = 'SEC#4 (FAB)'
-IC = 'test'
+IC = 'SEC#4 (FAB)'
+# IC = 'test'
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
