@@ -27,8 +27,8 @@
 - [x] light load
 - [x] Burn-in Test 100VOR
 - [x] EMI
-- [ ] Analog Dimming (115Vac, 230Vac, 277Vac)(46V, 36V, 24V)
+- [x] Analog Dimming (115Vac, 230Vac, 277Vac)(46V, 36V, 24V)
 
 
 ## Others
-- Q4 2020 All-Hands Quarterly COmmunication Meeting
+- [x] Q4 2020 All-Hands Quarterly COmmunication Meeting
