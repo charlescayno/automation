@@ -41,5 +41,5 @@
 - [x] Analog Dimming (115Vac, 230Vac, 277Vac)(46V, 36V, 24V)
 
 ## Others
-- [x] Q4 2020 All-Hands Quarterly COmmunication Meeting
+- [x] Q4 2020 All-Hands Quarterly Communication Meeting
 - [x] LYT8 Single Stage Code Beta Shipping

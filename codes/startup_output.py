@@ -12,14 +12,21 @@ Iout_max = 2 # A
 Iout = [Iout_max, 0.50*Iout_max]
 Iout_name = [100, 50]
 ## select IC to test
-# IC = 'test'
+IC = 'test'
 # IC = 'SEC#4 (FAB)'
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
-
+from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
 from time import sleep, time
 import os
+
+ac = ACSource(address=5)
+pms = PowerMeter(address=1)
+pml = PowerMeter(address=4)
+eload = ElectronicLoad(address=16)
+# scope = Oscilloscope(address='10.125.10.139')
+scope = Oscilloscope(address='10.125.10.156')
 
 def reminders():
   print()
@@ -28,17 +35,9 @@ def reminders():
   print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
   print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
   print("> Set CH3 = Output Current (Current Probe)")
-  print("> Set position to 30%")
+  print("> Set position to 50%")
   print()
   input("Press ENTER to continue...")
-
-def init_equipment():
-  from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
-  ac = ACSource(address=5)
-  pms = PowerMeter(address=1)
-  pml = PowerMeter(address=4)
-  eload = ElectronicLoad(address=16)
-  scope = Oscilloscope(address='10.125.10.139')
 
 def headers(test_name):
 
@@ -84,7 +83,7 @@ def init_trigger():
   scope.stop()
 
 def reset():
-  print("resetting...")
+  # print("resetting...")
   ac.turn_off()
   eload.channel[1].cc = 1
   eload.channel[1].turn_on()
@@ -124,7 +123,8 @@ def startup_90degPhase(voltage,frequency):
   ac.write("VOLT:OFFS:SLEW:MODE FIX")
   
   ac.write("PHAS:MODE LIST")
-  ac.write("LIST:PHAS 270, 270, 270")
+  # ac.write("LIST:PHAS 270, 270, 270")
+  ac.write("LIST:PHAS 90, 90, 90")
   
   ac.write("CURR:PEAK:MODE LIST")
   ac.write("LIST:CURR 40.4, 40.4, 40.4")
@@ -156,6 +156,8 @@ def startup_cc():
 
   global voltage
   global frequency
+  global Iout_index
+  global waveform_counter
 
   for voltage, frequency in zip(vin, freq):
     
@@ -172,35 +174,49 @@ def startup_cc():
       soak(2)
       scope.stop()
 
+      cursor1 = 0
+      cursor2 = 0
+      scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
       ####################################################
 
       data = scope.get_chan_data(1) # get input voltage waveform data points
-      
+      vo_data = scope.get_chan_data(2)
+
       ## search for the time of startup
       index_ctr = 0
-      lim = 126 # 127V (90*sqrt(2)=127V)
+      lim = 10 # 127V (90*sqrt(2)=127V)
       pos_x1 = 0
-      pos_x2 = 0
       for point in data:
         if point >= lim:
           pos_x1 = index_ctr
           break
         index_ctr += 1
       
+      
+      index_ctr = 0
+      lim = trigger_level
+      pos_x2 = 0
+      for point in vo_data:
+        if point >= lim:
+          pos_x2 = index_ctr
+          break
+        index_ctr += 1
+
+
       a = scope.get_horizontal()
       resolution = float(a["resolution"])
-      minimum = float(a["scale"])*(-3) # set the cursor to the leftmost part of the screen
+      minimum = float(a["scale"])*(-5) # set the cursor to the leftmost part of the screen
                                        # assuming position at 50%
       
       cursor1 = minimum + resolution*pos_x1
-      cursor2 = pos_x2
+      cursor2 = minimum + resolution*pos_x2
       
-      print("Y1: " + str(data[pos_x1])+ " V")
-      print("X1: " + str(cursor1) + " s")
-      print("Y2: " + str(data[pos_x2])+ " V")
-      print("X2: " + str(cursor2) + " s")
+      # print("Y1: " + str(data[pos_x1])+ " V")
+      # print("X1: " + str(cursor1) + " s")
+      # print("Y2: " + str(data[pos_x2])+ " V")
+      # print("X2: " + str(cursor2) + " s")
 
-      print()
+      # print()
 
       scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
 
@@ -216,17 +232,16 @@ def startup_cc():
       Iout_index += 1
       waveform_counter += 1
 
-      print()
+      # print()
       reset()
     
     Iout_index = 0 # resest iout naming index for the next voltage
 
 
 ## main code ##
-# init_equipment()
-reminders()
+# reminders()
 headers("Output Startup")
-# startup_cc()
+startup_cc()
 footers()
 
 
