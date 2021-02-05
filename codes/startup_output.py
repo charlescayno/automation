@@ -74,7 +74,7 @@ def footers():
   print('test complete.')
   print()
   end = time()
-  print(f'test time: {(end-start)/60} mins.')
+  print(f'test time: {(end-start)} secs.')
 
 def init_trigger():
   # Trigger Settings
@@ -89,7 +89,7 @@ def reset():
   eload.channel[1].turn_on()
   eload.channel[2].cc = 1
   eload.channel[2].turn_on()
-  soak(2)
+  sleep(2)
   print()
 
 def soak(soak_time):
@@ -163,15 +163,16 @@ def startup_cc():
     
     ac.voltage = voltage
     ac.frequency = frequency
+    sleep(1)
     
     for x in Iout:
       eload.channel[1].cc = x
       eload.channel[1].turn_on()
 
       scope.run_single()
-      soak(1)
+      sleep(1)
       startup_90degPhase(voltage, frequency)
-      soak(2)
+      sleep(2)
       scope.stop()
 
       cursor1 = 0
