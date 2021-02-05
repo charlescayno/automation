@@ -5,8 +5,9 @@
 trigger_level = 20   # [V] set to the output voltage
 trigger_source = 2   # CH2 = Output Voltage
 ## INPUT
-vin = [90,115,230,265]
-freq = [60,60,50,50]
+vin = [265,230,115]
+freq = [50,50,60]
+
 ## OUTPUT
 Iout_max = 2 # A
 Iout = [Iout_max, 0.50*Iout_max]
@@ -84,12 +85,12 @@ def init_trigger():
 
 def reset():
   # print("resetting...")
-  ac.turn_off()
+  # ac.turn_off()
   eload.channel[1].cc = 1
   eload.channel[1].turn_on()
   eload.channel[2].cc = 1
   eload.channel[2].turn_on()
-  sleep(2)
+  sleep(1)
   print()
 
 def soak(soak_time):
@@ -163,21 +164,22 @@ def startup_cc():
     
     ac.voltage = voltage
     ac.frequency = frequency
-    sleep(1)
+
+    # sleep(1)
     
     for x in Iout:
       eload.channel[1].cc = x
       eload.channel[1].turn_on()
 
       scope.run_single()
-      sleep(1)
-      startup_90degPhase(voltage, frequency)
       sleep(2)
+      startup_90degPhase(voltage, frequency)
+      sleep(5)
       scope.stop()
 
-      cursor1 = 0
-      cursor2 = 0
-      scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
+      # cursor1 = 0
+      # cursor2 = 0
+      # scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
       ####################################################
 
       data = scope.get_chan_data(1) # get input voltage waveform data points
@@ -226,6 +228,7 @@ def startup_cc():
 
       ####################################################
 
+      sleep(1)
       filename = f'{IC} {voltage}Vac {Iout_name[Iout_index]}LoadCC.png'
       scope.get_screenshot(filename, waveforms_folder)
       print(f'{IC} {voltage}Vac {Iout_name[Iout_index]}LoadCC.png')
