@@ -19,15 +19,25 @@ IC = 'test'
 #########################################################################################
 # USER INPUT ENDS HERE
 from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
+# from powi.equipment import Oscilloscope
 from time import sleep, time
 import os
 
+# initialize equipment
 ac = ACSource(address=5)
 pms = PowerMeter(address=1)
 pml = PowerMeter(address=4)
 eload = ElectronicLoad(address=16)
-# scope = Oscilloscope(address='10.125.10.139')
-scope = Oscilloscope(address='10.125.10.156')
+# scope = Oscilloscope(address='10.125.10.139') # charles
+scope = Oscilloscope(address='10.125.10.156') # joshua
+
+# initialize variables
+global Iout_index
+global waveform_counter
+global start
+global waveforms_folder
+waveform_counter = 0
+Iout_index = 0
 
 def reminders():
   print()
@@ -37,6 +47,7 @@ def reminders():
   print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
   print("> Set CH3 = Output Current (Current Probe)")
   print("> Set position to 50%")
+  scope.time_position(50)
   print()
   input("Press ENTER to continue...")
 
@@ -45,26 +56,18 @@ def headers(test_name):
   print()
   print("="*50)
   print(f"Test: {test_name}")
-  
-  # initialization
-  global waveform_counter
-  global Iout_index
-  global start
-  waveform_counter = 0
-  Iout_index = 0
 
   create_folder(test_name)
   start = time()
   print()
 
 def create_folder(test_name):
-  global waveforms_folder
   # creating folder for the saved waveforms
   waveforms_folder = f'waveforms/{test_name}'
   pathname = f"{os.getcwd()}\{waveforms_folder}"
   isExist = os.path.exists(pathname)
 
-  if isExist == False:
+  if !isExist:
     os.mkdir(pathname)
     print(f"{waveforms_folder} created.")
   else:
@@ -155,92 +158,68 @@ def startup_cc():
   init_trigger()
   scope.trigger_level(trigger_source, trigger_level) 
 
-  global voltage
-  global frequency
-  global Iout_index
-  global waveform_counter
-
   for voltage, frequency in zip(vin, freq):
     
+    # set input voltage
     ac.voltage = voltage
     ac.frequency = frequency
-
-    # sleep(1)
     
-    for x in Iout:
-      eload.channel[1].cc = x
+    for curr in Iout:
+      
+      # set eload
+      eload.channel[1].cc = curr
       eload.channel[1].turn_on()
 
+      # trigger scope
       scope.run_single()
       sleep(2)
       startup_90degPhase(voltage, frequency)
       sleep(5)
       scope.stop()
 
-      # cursor1 = 0
-      # cursor2 = 0
-      # scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
-      ####################################################
-
-      data = scope.get_chan_data(1) # get input voltage waveform data points
+      # get waveform data from scope
+      vin_data = scope.get_chan_data(1)
       vo_data = scope.get_chan_data(2)
 
-      ## search for the time of startup
-      index_ctr = 0
-      lim = 10 # 127V (90*sqrt(2)=127V)
+      # search algorithm for cursor 1
+      j = 0
       pos_x1 = 0
-      for point in data:
-        if point >= lim:
-          pos_x1 = index_ctr
+      for point in vin_data:
+        if point >= 10: # if vin > 10V
+          pos_x1 = j    # set cursor here
           break
-        index_ctr += 1
+        j += 1
       
-      
-      index_ctr = 0
-      lim = trigger_level
-      pos_x2 = 0
-      for point in vo_data:
-        if point >= lim:
-          pos_x2 = index_ctr
+      # search algorithm for cursor 2
+      j = 0
+      pos_x1 = 0
+      for point in vin_data:
+        if point >= trigger_level: # if vo > trigger_level (which is the vo reg)
+          pos_x1 = j               # set cursor there
           break
-        index_ctr += 1
+        j += 1
 
-
+      # set cursors (to get startup time)
       a = scope.get_horizontal()
       resolution = float(a["resolution"])
       minimum = float(a["scale"])*(-5) # set the cursor to the leftmost part of the screen
-                                       # assuming position at 50%
-      
       cursor1 = minimum + resolution*pos_x1
       cursor2 = minimum + resolution*pos_x2
-      
-      # print("Y1: " + str(data[pos_x1])+ " V")
-      # print("X1: " + str(cursor1) + " s")
-      # print("Y2: " + str(data[pos_x2])+ " V")
-      # print("X2: " + str(cursor2) + " s")
-
-      # print()
-
       scope.cursor(channel=1, cursor_set=1, X1=cursor1, X2=cursor2)
-
       startup_time = scope.get_cursor()["delta x"]
       print(f"startup time = {startup_time} s")
 
-      ####################################################
-
+      # get screenshot
       sleep(1)
       filename = f'{IC} {voltage}Vac {Iout_name[Iout_index]}LoadCC.png'
       scope.get_screenshot(filename, waveforms_folder)
       print(f'{IC} {voltage}Vac {Iout_name[Iout_index]}LoadCC.png')
-      
       Iout_index += 1
       waveform_counter += 1
 
-      # print()
       reset()
     
     Iout_index = 0 # resest iout naming index for the next voltage
-
 
 ## main code ##
 # reminders()
