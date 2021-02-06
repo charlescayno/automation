@@ -28,8 +28,8 @@ ac = ACSource(address=5)
 pms = PowerMeter(address=1)
 pml = PowerMeter(address=4)
 eload = ElectronicLoad(address=16)
-# scope = Oscilloscope(address='10.125.10.139') # charles
-scope = Oscilloscope(address='10.125.10.156') # joshua
+scope = Oscilloscope(address='10.125.10.139') # charles
+# scope = Oscilloscope(address='10.125.10.156') # joshua
 
 # initialize variables
 global Iout_index
@@ -46,8 +46,10 @@ def reminders():
   print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
   print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
   print("> Set CH3 = Output Current (Current Probe)")
+  print()
   print("> Set position to 50%")
   scope.time_position(50)
+  print("> Set the trigger level to the voltage output regulation")
   print()
   input("Press ENTER to continue...")
 
@@ -67,7 +69,7 @@ def create_folder(test_name):
   pathname = f"{os.getcwd()}\{waveforms_folder}"
   isExist = os.path.exists(pathname)
 
-  if !isExist:
+  if isExist == False:
     os.mkdir(pathname)
     print(f"{waveforms_folder} created.")
   else:
@@ -185,7 +187,7 @@ def startup_cc():
       j = 0
       pos_x1 = 0
       for point in vin_data:
-        if point >= 10: # if vin > 10V
+        if point >= 10: # if vin >= 10V
           pos_x1 = j    # set cursor here
           break
         j += 1
@@ -194,7 +196,7 @@ def startup_cc():
       j = 0
       pos_x1 = 0
       for point in vin_data:
-        if point >= trigger_level: # if vo > trigger_level (which is the vo reg)
+        if point >= trigger_level: # if vo >= vo_reg
           pos_x1 = j               # set cursor there
           break
         j += 1
@@ -221,11 +223,13 @@ def startup_cc():
     
     Iout_index = 0 # resest iout naming index for the next voltage
 
+
+
+
+
+
 ## main code ##
 # reminders()
-headers("Output Startup")
-startup_cc()
-footers()
-
-
-
+# headers("Output Startup")
+# startup_cc()
+# footers()
