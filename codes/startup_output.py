@@ -18,16 +18,17 @@ IC = 'test'
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
-# from powi.equipment import Oscilloscope
+
+# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
+from powi.equipment import Oscilloscope
 from time import sleep, time
 import os
 
 # initialize equipment
-ac = ACSource(address=5)
-pms = PowerMeter(address=1)
-pml = PowerMeter(address=4)
-eload = ElectronicLoad(address=16)
+# ac = ACSource(address=5)
+# pms = PowerMeter(address=1)
+# pml = PowerMeter(address=4)
+# eload = ElectronicLoad(address=16)
 scope = Oscilloscope(address='10.125.10.139') # charles
 # scope = Oscilloscope(address='10.125.10.156') # joshua
 
@@ -38,20 +39,6 @@ global start
 global waveforms_folder
 waveform_counter = 0
 Iout_index = 0
-
-def reminders():
-  print()
-  print("Test Setup")
-  print("> Load .dfl for Output Startup")
-  print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
-  print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
-  print("> Set CH3 = Output Current (Current Probe)")
-  print()
-  print("> Set position to 50%")
-  scope.time_position(50)
-  print("> Set the trigger level to the voltage output regulation")
-  print()
-  input("Press ENTER to continue...")
 
 def headers(test_name):
 
@@ -90,7 +77,7 @@ def init_trigger():
 
 def reset():
   # print("resetting...")
-  # ac.turn_off()
+  ac.turn_off()
   eload.channel[1].cc = 1
   eload.channel[1].turn_on()
   eload.channel[2].cc = 1
@@ -103,6 +90,27 @@ def soak(soak_time):
       sleep(1)
       print(f"{seconds:5d}s", end="\r")
   print("       ", end="\r")
+
+
+
+
+
+
+#### special functions #####
+
+def reminders():
+  print()
+  print("Test Setup")
+  print("> Load .dfl for Output Startup")
+  print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
+  print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
+  print("> Set CH3 = Output Current (Current Probe)")
+  print()
+  print("> Set position to 50%")
+  scope.time_position(50)
+  print("> Set the trigger level to the voltage output regulation")
+  print()
+  input("Press ENTER to continue...")
 
 def startup_90degPhase(voltage,frequency):
   # ac.write("OUTP:STAT?")
