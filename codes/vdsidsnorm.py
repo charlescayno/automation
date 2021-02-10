@@ -13,8 +13,8 @@ freq = [60,60,50,50]
 
 # OUTPUT
 Iout_max = 2 # Amps
-Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0.10*Iout_max]
-Iout_name = [100, 75, 50, 25, 10]
+Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max]
+Iout_name = [100, 75, 50, 25]
 
 # select IC to test
 IC = 'SEC#4 (FAB)'
@@ -94,56 +94,6 @@ def soak(soak_time):
         print(f"{seconds:5d}s", end="\r")
     print("       ", end="\r")
 
-
-
-
-## special functions for output ripple
-
-def reminders():
-    print()
-    print("Test Setup")
-    print("> Load .dfl for Output Ripple")
-    print("> Set CH1 = Output Voltage (Barrel Probe) x10 setting")
-    print("Use barrel probe with filter capacitors")
-    scope.time_position(50)
-    input("Press ENTER to continue...")
-
-def find_trigger():
-  # finding trigger level
-  scope.run_single()
-  soak(5)
-
-  # get initial peak-to-peak measurement value
-  labels, values = scope.get_measure()
-  ptp_value = float(values[1])
-  ptp_value = float(f"{ptp_value:.4f}")
-  max_value = float(values[0])
-  max_value = float(f"{max_value:.4f}")
-
-  # set max_value as initial trigger level
-  trigger_level = max_value
-  scope.trigger_level(trigger_source, trigger_level)
-
-  # check if it triggered within 5 seconds
-  scope.run_single()
-  soak(5)
-  trigger_status = scope.trigger_status()
-
-  # increase trigger level until it reaches the maximum trigger level
-  while (trigger_status == 1):
-    trigger_level = float(trigger_level) + trigger_delta
-    scope.trigger_level(trigger_source, trigger_level)
-    
-    # check trigger status
-    scope.run_single()
-    soak(3)
-    trigger_status = scope.trigger_status()
-
-  # decrease trigger level below to get the maximum trigger possible
-  trigger_level = float(trigger_level) - 2*trigger_delta
-  final_trigger_level = trigger_level
-  scope.trigger_level(trigger_source, trigger_level)
-
 def percent_load():
 
     init_trigger()
@@ -163,8 +113,6 @@ def percent_load():
             else:
             soak(5)
             
-            find_trigger()
-
             # get screenshot
             scope.run_single()
             soak(6)
@@ -174,15 +122,13 @@ def percent_load():
             Iout_index += 1
             waveform_counter += 1
 
-            # reset trigger level
-            scope.trigger_level(trigger_source, trigger_level = 0.010)
+
             print()
         
         reset()
 
-
 ## main code ##
 # reminders()
-# headers("Output Ripple")
+# headers("Vds Ids Normal Operation")
 # percent_load()
 # footers()
