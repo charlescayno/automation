@@ -9,7 +9,7 @@ vin = [85,115,230,265]
 freq = [60,60,50,50]
 
 ## OUTPUT
-Iout_max = 2 # A
+Iout_max = 3.25 # A
 Iout = [Iout_max, 0.50*Iout_max]
 Iout_name = [100, 50]
 ## select IC to test
@@ -100,9 +100,8 @@ def reminders():
     print()
     print("Test Setup")
     print("> Load .dfl for Output Load Transient")
-    print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
-    print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
-    print("> Set CH3 = Output Current (Current Probe)")
+    print("> Set CH1 = Vout")
+    print("> Set CH3 = Iout")
     print()
     print("> Set position to 50%")
     scope.time_position(50)
