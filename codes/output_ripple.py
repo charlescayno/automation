@@ -154,6 +154,7 @@ def percent_load():
 
     global waveforms_folder
     global waveform_counter
+    
     waveform_counter = 0
 
     for voltage, frequency in zip(vin, freq):
