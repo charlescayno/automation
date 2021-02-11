@@ -42,65 +42,33 @@ Iout_name = [100, 50]
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+from powi.equipment import headers, create_folder, footers
 from time import sleep, time
 import os
 
 # initialize equipment
-ac = ACSource(ac_source_address)
-pms = PowerMeter(source_power_meter_address)
-pml = PowerMeter(load_power_meter_address)
-eload = ElectronicLoad(eload_address)
-scope = Oscilloscope(scope_address)
+# ac = ACSource(ac_source_address)
+# pms = PowerMeter(source_power_meter_address)
+# pml = PowerMeter(load_power_meter_address)
+# eload = ElectronicLoad(eload_address)
+# scope = Oscilloscope(scope_address)
 
-# initialize variables
-global Iout_index
-global waveform_counter
-global start
-global waveforms_folder
+# # initialize variables
+# global Iout_index
+# global waveform_counter
+# global start
+# global waveforms_folder
 waveform_counter = 0
-Iout_index = 0
+# Iout_index = 0
 
-def headers(test_name):
-    global start
+headers("Output Startup")
+footers(waveform_counter)
+input()
 
-    print()
-    print("="*50)
-    print(f"Test: {test_name}")
 
-    create_folder(test_name)
-    start = time()
-    print()
-
-def create_folder(test_name):
-    # creating folder for the saved waveforms
-    waveforms_folder = f'waveforms/{test_name}'
-    pathname = f"{os.getcwd()}\{waveforms_folder}"
-    isExist = os.path.exists(pathname)
-
-    if isExist == False:
-        os.mkdir(pathname)
-        print(f"{waveforms_folder} created.")
-    else:
-        print(f"{waveforms_folder} folder already exists.")
-
-def footers():
-    print()
-    print(f'{waveform_counter} waveforms captured.')
-    print('test complete.')
-    print()
-    end = time()
-    total_time = end-start
-    print(f'test time: {total_time:.2f} secs. / {total_time/60:.2f} mins.')
-
-def init_trigger():
-    # Trigger Settings
-    scope.edge_trigger(trigger_source, trigger_level, trigger_slope)
-    scope.trigger_mode(mode='NORM')
-    scope.stop()
 
 def reset():
-    print("resetting...")
     ac.turn_off()
     eload.channel[1].cc = 1
     eload.channel[1].turn_on()
@@ -108,32 +76,7 @@ def reset():
     eload.channel[2].turn_on()
     sleep(2)
 
-
-def soak(soak_time):
-    for seconds in range(soak_time, 0, -1):
-        sleep(1)
-        print(f"{seconds:5d}s", end="\r")
-    print("       ", end="\r")
-
-
-
-
-
 #### special functions #####
-
-def reminders():
-    print()
-    print("Test Setup")
-    print("> Load .dfl for Output Startup")
-    print("> Set CH1 = Input Voltage (Diff Probe) x100 setting")
-    print("> Set CH2 = Output Voltage (Barrel Probe) x10 setting")
-    print("> Set CH3 = Output Current (Current Probe)")
-    print()
-    print("> Set position to 50%")
-    scope.time_position(50)
-    print("> Set the trigger level to the voltage output regulation")
-    print()
-    input("Press ENTER to continue...")
 
 def startup_90degPhase(voltage,frequency):
     # ac.write("OUTP:STAT?")
@@ -190,8 +133,8 @@ def startup(case="cc"):
 
     global Iout_index
     global waveform_counter
-    init_trigger()
-    scope.trigger_level(trigger_source, trigger_level) 
+
+    scope.init_trigger(trigger_source, trigger_level, trigger_slope)
 
     for voltage, frequency in zip(vin, freq):
 
