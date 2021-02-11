@@ -12,6 +12,9 @@ freq = [60,60,50,50]
 Iout_max = 3.25 # A
 Iout = [Iout_max]
 Iout_name = [100]
+eload_channel = 1
+ton = 0.001 # s
+toff = 0.001 # s
 ## select IC to test
 # IC = 'test'
 # IC = 'SEC#4 (FAB)'
@@ -124,7 +127,7 @@ def loadtransient(x=1, case="0-100", eload_channel=1, ton=0.05, toff=0.05):
     eload.channel[eload_channel].dynamic(low, high, ton, toff)
     eload.channel[eload_channel].turn_on()
 
-    sleep(5)
+    sleep(2)
 
     # get screenshot
     scope.run_single()
@@ -152,20 +155,21 @@ def main():
         print(f"[{voltage}Vac {frequency}Hz]")
 
         for x in Iout:
+            
             # loadtransient(x, "0-25", eload_channel=1, ton=0.05, toff=0.05)
             # loadtransient(x, "25-50", eload_channel=1, ton=0.05, toff=0.05)
             # loadtransient(x, "50-75", eload_channel=1, ton=0.05, toff=0.05)
             # loadtransient(x, "75-100", eload_channel=1, ton=0.05, toff=0.05)
-            loadtransient(x, "0-100", eload_channel=1, ton=0.05, toff=0.05)
-            loadtransient(x, "50-100", eload_channel=1, ton=0.05, toff=0.05)
-            # loadtransient(x, "100-0", eload_channel=1, ton=0.05, toff=0.05)
-            # loadtransient(x, "100-50", eload_channel=1, ton=0.05, toff=0.05)
+            loadtransient(x, "0-100", eload_channel, ton, toff)
+            loadtransient(x, "50-100", eload_channel, ton, toff)
+            # loadtransient(x, "100-0", eload_channel, ton, toff)
+            # loadtransient(x, "100-50", eload_channel, ton, toff)
         
         reset()
 
 
 ## main code ##
-reminders("Output Load Transient")
+# reminders("Output Load Transient")
 headers("Output Load Transient")
 main()
 footers()
