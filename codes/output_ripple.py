@@ -8,32 +8,32 @@ trigger_source = 1     # CH1
 trigger_delta = 0.003  # [V] // describes how reactive the trigger automation
 
 # INPUT
-vin = [85,115,230,265]
-freq = [60,60,50,50]
+vin = [115,230,265]
+freq = [60,50,50]
 
 # OUTPUT
-Iout_max = 2 # Amps
-Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0.10*Iout_max]
-Iout_name = [100, 75, 50, 25, 10]
+Iout_max = 3.25 # Amps
+Iout = [Iout_max, 0.75*Iout_max, 0.50*Iout_max, 0.25*Iout_max, 0]
+Iout_name = [100, 75, 50, 25, 0]
 
 # select IC to test
-IC = 'SEC#4 (FAB)'
+# IC = 'SEC#4 (FAB)'
 # IC = 'test'
 # IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
-# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
+from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, truncate
 from powi.equipment import Oscilloscope
 from time import sleep, time
 import os
 
 # initialize equipment
-# ac = ACSource(address=5)
-# pms = PowerMeter(address=1)
-# pml = PowerMeter(address=4)
-# eload = ElectronicLoad(address=16)
-scope = Oscilloscope(address='10.125.10.139') # charles
-# scope = Oscilloscope(address='10.125.10.156') # joshua
+ac = ACSource(address=5)
+pms = PowerMeter(address=1)
+pml = PowerMeter(address=4)
+eload = ElectronicLoad(address=16)
+# scope = Oscilloscope(address='10.125.10.139') # charles
+scope = Oscilloscope(address='10.125.10.156') # joshua
 
 # initialize variables
 global Iout_index
@@ -54,6 +54,8 @@ def headers(test_name):
     print()
 
 def create_folder(test_name):
+
+    global waveforms_folder
     # creating folder for the saved waveforms
     waveforms_folder = f'waveforms/{test_name}'
     pathname = f"{os.getcwd()}\{waveforms_folder}"
@@ -66,6 +68,7 @@ def create_folder(test_name):
         print(f"{waveforms_folder} folder already exists.")
 
 def footers():
+    global start
     print(f'{waveform_counter} waveforms captured.')
     print('test complete.')
     print()
@@ -126,7 +129,7 @@ def find_trigger():
 
   # check if it triggered within 5 seconds
   scope.run_single()
-  soak(5)
+  soak(3)
   trigger_status = scope.trigger_status()
 
   # increase trigger level until it reaches the maximum trigger level
@@ -147,6 +150,11 @@ def find_trigger():
 def percent_load():
 
     init_trigger()
+    Iout_index = 0
+
+    global waveforms_folder
+    global waveform_counter
+    waveform_counter = 0
 
     for voltage, frequency in zip(vin, freq):
 
@@ -155,22 +163,27 @@ def percent_load():
         ac.turn_on()
 
         for x in Iout:
-            eload.channel[1].cc = x
-            eload.channel[1].turn_on()
+            if x == 0:
+                eload.channel[1].turn_off()
+                filename = f'{voltage}Vac 0Load.png'
+
+            else:
+                eload.channel[1].cc = x
+                eload.channel[1].turn_on()
+                filename = f'{voltage}Vac {Iout_name[Iout_index]}Load.png'
             
             if x == 0:
-            soak(10)
+                soak(1)
             else:
-            soak(5)
+                soak(1)
             
             find_trigger()
 
             # get screenshot
             scope.run_single()
             soak(6)
-            filename = f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png'
             scope.get_screenshot(filename, waveforms_folder)
-            print(f'{IC} {voltage}Vac {Iout_name[Iout_index]}Load.png')
+            print(filename)
             Iout_index += 1
             waveform_counter += 1
 
@@ -178,11 +191,12 @@ def percent_load():
             scope.trigger_level(trigger_source, trigger_level = 0.010)
             print()
         
+        Iout_index = 0
         reset()
 
 
 ## main code ##
 # reminders()
-# headers("Output Ripple")
-# percent_load()
-# footers()
+headers("Output Ripple")
+percent_load()
+footers()
