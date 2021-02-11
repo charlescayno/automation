@@ -8,8 +8,8 @@ trigger_source = 1     # CH1
 trigger_delta = 0.003  # [V] // describes how reactive the trigger automation
 
 # INPUT
-vin = [115,230,265]
-freq = [60,50,50]
+vin = [90,115,230,265]
+freq = [60,60,50,50]
 
 # OUTPUT
 Iout_max = 3.25 # Amps
@@ -44,7 +44,7 @@ waveform_counter = 0
 Iout_index = 0
 
 def headers(test_name):
-
+    global start
     print()
     print("="*50)
     print(f"Test: {test_name}")
