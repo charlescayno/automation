@@ -13,7 +13,6 @@ scope_address = "10.125.10.156"
 vin_channel = 3
 vout_channel = 1
 iout_channel = 2
-
 position = -2
 
 # trigger settings
@@ -204,7 +203,6 @@ def startup(case="cc"):
         Iout_index = 0 # resest iout naming index for the next voltage
     
     print()
-
 
 ## main code ##
 # reminders()
