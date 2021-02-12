@@ -33,48 +33,28 @@ vout = 20
 Iout_max = 3.25 # A
 Iout = [Iout_max, 0.50*Iout_max]
 Iout_name = [100, 50]
-
-
-# typeofactivity = 'DER'
-# typeofactivity = "FABXFER"
-
-# IC = 'SEC#4 (FAB)'
-# IC = 'LAPISS2#33 (CTRL)'
 #########################################################################################
 # USER INPUT ENDS HERE
+
 # from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
-from powi.equipment import headers, create_folder, footers
+from powi.equipment import headers, create_folder, footers, waveform_counter
 from time import sleep, time
 import os
 
-# initialize equipment
+## initialize equipment
 # ac = ACSource(ac_source_address)
 # pms = PowerMeter(source_power_meter_address)
 # pml = PowerMeter(load_power_meter_address)
 # eload = ElectronicLoad(eload_address)
 # scope = Oscilloscope(scope_address)
 
-# # initialize variables
-# global Iout_index
-# global waveform_counter
-# global start
-# global waveforms_folder
-waveform_counter = 0
-# Iout_index = 0
-
-headers("Output Startup")
-footers(waveform_counter)
-input()
-
-
-
 def reset():
-    ac.turn_off()
-    eload.channel[1].cc = 1
-    eload.channel[1].turn_on()
-    eload.channel[2].cc = 1
-    eload.channel[2].turn_on()
-    sleep(2)
+    # ac.turn_off()
+    # eload.channel[1].cc = 1
+    # eload.channel[1].turn_on()
+    # eload.channel[2].cc = 1
+    # eload.channel[2].turn_on()
+    sleep(0.1)
 
 #### special functions #####
 
@@ -131,82 +111,98 @@ def startup_90degPhase(voltage,frequency):
 
 def startup(case="cc"):
 
-    global Iout_index
     global waveform_counter
+    global Iout
+    
+    Iout_index = 0
 
-    scope.init_trigger(trigger_source, trigger_level, trigger_slope)
+    # scope.init_trigger(trigger_source, trigger_level, trigger_slope)
+
+    if case == "cc":
+        print('{:<30} {:>1}'.format("[LOAD CC]", "startup_time"))
+    if case == "cr":
+        print('{:<30} {:>1}'.format("[LOAD CR]", "startup_time"))
+    if case == "nl":
+        print('{:<30} {:>1}'.format("[NO LOAD]", "startup_time"))
 
     for voltage, frequency in zip(vin, freq):
 
-        ## set input voltage
-        ac.voltage = voltage
-        ac.frequency = frequency
+        # ## set input voltage
+        # ac.voltage = voltage
+        # ac.frequency = frequency
+
+        if case == "nl":
+            Iout = [0]
 
         for curr in Iout:
-            if case == "cc":
-                eload.channel[eload_channel].cc = curr
-                eload.channel[eload_channel].turn_on()     
+            if case == "cc" and curr != 0:
+                # eload.channel[eload_channel].cc = curr
+                # eload.channel[eload_channel].turn_on()     
                 filename = f'{voltage}Vac {Iout_name[Iout_index]}LoadCC.png'
-            elif case == "cr":
+            elif case == "cr" and curr != 0:
                 rload = vout/curr
                 rload = f"{rload:.4f}"
                 rload = float(rload)
-                eload.channel[1].cr = rload
-                eload.channel[eload_channel].turn_on()
+                # eload.channel[1].cr = rload
+                # eload.channel[eload_channel].turn_on()
                 filename = f'{voltage}Vac {Iout_name[Iout_index]}LoadCR.png'
             elif case == "nl":
-                eload.channel[eload_channel].turn_off()
+                # eload.channel[eload_channel].turn_off()
                 filename = f'{voltage}Vac 0Load.png'
             else:
                 print("Please enter type of load (cc/cr/nl).")
                 break
 
-            # trigger scope
-            scope.run_single()
-            sleep(2)
-            startup_90degPhase(voltage, frequency)
-            sleep(5)
-            scope.stop()
+            # # trigger scope
+            # scope.run_single()
+            # sleep(2)
+            # startup_90degPhase(voltage, frequency)
+            # sleep(5)
+            # scope.stop()
 
-            # get waveform data from scope
-            vo_data = scope.get_chan_data(vout_channel)
+            # # get waveform data from scope
+            # vo_data = scope.get_chan_data(vout_channel)
 
-            # search algorithm for cursor 1
-            pos_x1 = 0
+            # # search algorithm for cursor 1
+            # pos_x1 = 0 # place at the start of the input voltage
             
-            # search algorithm for cursor 2
-            j = 0
-            pos_x2 = 0
-            for point in vo_data:
-                if point >= vout: # if vo >= vo_reg
-                    pos_x2 = j               # set cursor there
-                    break
-                j += 1
+            # # search algorithm for cursor 2
+            # j = 0
+            # pos_x2 = 0
+            # for point in vo_data:
+            #     if point >= vout: # if vo >= vo_reg
+            #         pos_x2 = j               # set cursor there
+            #         break
+            #     j += 1
 
-            # set cursors (to get startup time)
-            a = scope.get_horizontal()
-            resolution = float(a["resolution"])
-            minimum = float(a["scale"])*(position) # set the cursor to the leftmost part of the screen
+            # # set cursors (to get startup time)
+            # a = scope.get_horizontal()
+            # resolution = float(a["resolution"])
+            # minimum = float(a["scale"])*(position) # set the cursor to the leftmost part of the screen
             
-            if pos_x1 == 0: cursor1 = 0
-            else: cursor1 = minimum + resolution*pos_x1 
-            if pos_x2 == 0: cursor2 = 0
-            else: cursor2 = minimum + resolution*pos_x2
+            # if pos_x1 == 0: cursor1 = 0
+            # else: cursor1 = minimum + resolution*pos_x1 
+            # if pos_x2 == 0: cursor2 = 0
+            # else: cursor2 = minimum + resolution*pos_x2
 
-            scope.cursor(channel=vin_channel, cursor_set=1, X1=cursor1, X2=cursor2)
-            startup_time = scope.get_cursor()["delta x"]
-            print(f"startup time = {startup_time} s")
+            # scope.cursor(channel=vin_channel, cursor_set=1, X1=cursor1, X2=cursor2)
+            # sleep(0.5)
+            # startup_time = scope.get_cursor()["delta x"]
+            # print(f"startup time = {startup_time} s")
 
-            # get screenshot
-            sleep(1)
-            scope.get_screenshot(filename, waveforms_folder)
-            print(filename)
+            # # get screenshot
+            # sleep(1)
+            # scope.get_screenshot(filename, waveforms_folder)
+            
             Iout_index += 1
             waveform_counter += 1
-
+            # print(filename)
+            startup_time = "0.143 s"
+            print('{:<30} {:>5}'.format(filename, startup_time))
             reset()
 
         Iout_index = 0 # resest iout naming index for the next voltage
+    
     print()
 
 
@@ -216,4 +212,4 @@ headers("Output Startup")
 startup("cc")
 startup("cr")
 startup("nl")
-footers()
+footers(waveform_counter)
