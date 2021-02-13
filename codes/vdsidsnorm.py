@@ -2,6 +2,8 @@
 #########################################################################################
 ## TEST PARAMETERS
 
+test = "Vds Ids Normal Operation"
+
 # comms
 ac_source_address = 5
 source_power_meter_address = 1 
@@ -56,19 +58,15 @@ def reset():
     eload.channel[2].turn_on()
     sleep(1)
 
-
-
-
 def percent_load():
 
     scope.init_trigger(trigger_source, trigger_level, trigger_slope)
-
-    Iout_index = 0
 
     global waveforms_folder
     global waveform_counter
     
     waveform_counter = 0
+    Iout_index = 0
 
     for voltage, frequency in zip(vin, freq):
 
@@ -86,23 +84,23 @@ def percent_load():
                 eload.channel[1].cc = x
                 eload.channel[1].turn_on()
                 filename = f'{voltage}Vac {Iout_name[Iout_index]}LoadCC.png'
-                sleep(2)
+                sleep(1)
             
             # get screenshot
             scope.run_single()
-            soak(6)
+            soak(3)
             filename = f'{voltage}Vac {Iout_name[Iout_index]}Load.png'
             scope.get_screenshot(filename, waveforms_folder)
             print(filename)
+
             Iout_index += 1
             waveform_counter += 1
-
 
             print()
         
         reset()
 
 ## main code ##
-headers("Vds Ids Normal Operation")
+headers(test)
 percent_load()
 footers(waveform_counter)
