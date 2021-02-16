@@ -20,8 +20,6 @@ start = time()
 # plt.show()
 
 
-
-
 with open('soa.csv') as f:
     lines = f.readlines()
     vds = [float(line.split(";")[0]) for line in lines]
@@ -32,25 +30,27 @@ with open('soa.csv') as f:
 
 print()
 
+## printing the data
 y = ids
 x = vds
 max_p = []
 for xi, yi in zip(x,y):
-    p = xi*yi
+    p = xi*yi # getting the power
     max_p.append(float(p))
-print(max(max_p))
+print(f'Po_max: {max(max_p)} W')
 c = max_p.index(max(max_p))
-print(c)
-print(y[c])
-print(x[c])
+print(f"Index of Po_max: {c}")
+print(f"Ids[index]: {y[c]} A")
+print(f"Vds[index]: {x[c]} V")
 a = y[c]*x[c]
-print(a)
+print(f"Vds[index]*Ids[index]: {a} W")
 
 
 # plt.ylim(min(y),max(y))
 # plt.xlim(min(x),max(x))
 plt.plot(x,y)
-# plt.plot(x,max_p)
+plt.ylabel("Ids [A]")
+plt.xlabel("Vds [V]")
 
 plt.show()
 
