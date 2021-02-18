@@ -1,7 +1,6 @@
 # python script showing battery details 
 import psutil 
 from time import time, sleep
-import matplo
 # function returning time in hh:mm:ss 
 def convertTime(seconds): 
 	minutes, seconds = divmod(seconds, 60) 
@@ -12,15 +11,15 @@ def convertTime(seconds):
 battery = psutil.sensors_battery() 
 
 while (1):
-    print("Battery percentage : ", battery.percent) 
+    print(f"Battery percentage : {battery.percent}%") 
     # print("Power plugged in : ", battery.power_plugged) 
 
     # converting seconds to hh:mm:ss 
     # print("Battery left : ", convertTime(battery.secsleft))
-    sleep(1)
+    sleep(60)
 
 
-print("Battery percentage : ", battery.percent) 
+# print("Battery percentage : ", battery.percent) 
 # print("Power plugged in : ", battery.power_plugged) 
 
 # converting seconds to hh:mm:ss 
