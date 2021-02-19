@@ -3,8 +3,8 @@ from time import sleep, time
 import pandas as pd
 import os
 import shutil
-from powi.equipment import ACSource
-from powi.equipment import ElectronicLoad
+# from powi.equipment import ACSource
+# from powi.equipment import ElectronicLoad
 
 def exists(filename):
     return os.path.isfile(filename)
@@ -40,12 +40,19 @@ def delete_file(filename):
     except:
         pass
 
-filename = "120Vac, 60Hz, 46V LED [cased].xlsx"
+filename = "test.xlsx"
 column_name = "test"
-raw_df = file_to_df(filename, column_name)
-print(raw_df)
+
+df = pd.read_excel(filename, engine = "openpyxl")
+print(df)
+
+
+# raw_df = file_to_df(filename, column_name)
+# print(raw_df)
 # append_df_to_file(output_file, raw_df)
 # delete_file(raw_acoustic_file)
+
+
 
 
 
