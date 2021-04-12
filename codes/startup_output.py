@@ -7,7 +7,7 @@ ac_source_address = 5
 source_power_meter_address = 1 
 load_power_meter_address = 2
 eload_address = 8
-scope_address = "10.125.10.156"
+scope_address = "10.125.10.112"
 
 # scope settings
 vin_channel = 3
@@ -35,16 +35,17 @@ Iout_name = [100, 50]
 #########################################################################################
 # USER INPUT ENDS HERE
 
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+from powi.equipment import Oscilloscope
 from powi.equipment import headers, create_folder, footers, waveform_counter
 from time import sleep, time
 import os
 
 ## initialize equipment
-ac = ACSource(ac_source_address)
-pms = PowerMeter(source_power_meter_address)
-pml = PowerMeter(load_power_meter_address)
-eload = ElectronicLoad(eload_address)
+# ac = ACSource(ac_source_address)
+# pms = PowerMeter(source_power_meter_address)
+# pml = PowerMeter(load_power_meter_address)
+# eload = ElectronicLoad(eload_address)
 scope = Oscilloscope(scope_address)
 
 def reset():
@@ -205,8 +206,48 @@ def startup(case="cc"):
     print()
 
 ## main code ##
-headers("Output Startup")
-startup("cc")
-startup("cr")
-startup("nl")
-footers(waveform_counter)
+# headers("Output Startup")
+# startup("cc")
+# startup("cr")
+# startup("nl")
+# footers(waveform_counter)
+
+
+
+
+
+
+def get_chan_data(channel=1):
+    # scope.write('FORM ASC')
+    scope.write("FORM:DATA INT,16")
+    scope.write('EXP:WAV:INCX OFF')
+    temp = scope.write(f'CHAN{channel}:WAV1:DATA?') # type: string
+    # temp = list(temp.split(",")) # type: list
+    # data = []
+    # for h in temp:
+    #     data.append(float(h))
+    # return data
+
+    with open("data.txt", "w") as file:
+        file.write(temp)
+    return temp
+
+
+def save_channel_data(channel=1):
+    scope.write("EXPort:WAVeform:MULTIchannel ON")
+    scope.write("EXP:WAV:INCX OFF")
+    for i in range(1, 5):
+        if i == channel:
+            scope.write(f"CHANnel{i}:EXPortstate ON")
+        else:
+            scope.write(f"CHANnel{i}:EXPortstate OFF")
+    scope.write("FORM:DATA INT,16")
+    scope.write(f"CHAN{channel}:WAV1:DATA?")
+
+
+
+scope.stop()
+sleep(1)
+a = get_chan_data(iout_channel)
+print(len(a))
+

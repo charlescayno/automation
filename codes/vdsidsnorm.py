@@ -9,7 +9,7 @@ ac_source_address = 5
 source_power_meter_address = 1 
 load_power_meter_address = 2
 eload_address = 8
-scope_address = "10.125.10.156"
+scope_address = "10.125.10.112"
 
 # scope settings
 # vin_channel = 3
@@ -38,16 +38,17 @@ Iout_name = [100, 75, 50, 25, 10, 0]
 #########################################################################################
 # USER INPUT ENDS HERE
 
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
-from powi.equipment import headers, create_folder, footers, waveform_counter
+# from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope
+from powi.equipment import Oscilloscope
+# from powi.equipment import headers, create_folder, footers, waveform_counter
 from time import sleep, time
 import os
 
 # initialize equipment
-ac = ACSource(ac_source_address)
-pms = PowerMeter(source_power_meter_address)
-pml = PowerMeter(load_power_meter_address)
-eload = ElectronicLoad(eload_address)
+# ac = ACSource(ac_source_address)
+# pms = PowerMeter(source_power_meter_address)
+# pml = PowerMeter(load_power_meter_address)
+# eload = ElectronicLoad(eload_address)
 scope = Oscilloscope(scope_address)
 
 def reset():
@@ -101,6 +102,9 @@ def percent_load():
         reset()
 
 ## main code ##
-headers(test)
-percent_load()
-footers(waveform_counter)
+# headers(test)
+# percent_load()
+# footers(waveform_coun
+scope.stop()
+data = scope.get_chan_data(2)
+print(len(data))
