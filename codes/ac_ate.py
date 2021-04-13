@@ -1,6 +1,6 @@
 #########################################################################################
 # COMMS
-dc_source_address = 3
+ac_source_address = 5
 source_power_meter_address = 2 
 load_power_meter_address = 1
 eload_address = 8
@@ -13,14 +13,14 @@ from time import sleep, time
 import os
 
 # initialize equipment
-dc = DCSource(dc_source_address)
+ac = ACSource(ac_source_address)
 pms = PowerMeter(source_power_meter_address)
 pml = PowerMeter(load_power_meter_address)
 eload = ElectronicLoad(eload_address)
 # scope = Oscilloscope(scope_address)
 
-def dc_reset():
-    dc.turn_off()
+def ac_reset():
+    ac.turn_off()
     eload.channel[1].cc = 1
     eload.channel[1].turn_on()
     eload.channel[2].cc = 1
@@ -36,15 +36,12 @@ def soak(soak_time):
 def test_line_regulation(input_list, soak_time=5, integration_time=10):
     headers("Line Regulation")
     
-    print("vdc, vin, iin, pin, pf, vo1, io1, po1, eff")
+    print("vdc, vin, iin, pin, pf, thd, vo1, io1, po1, eff")
     print()
     
     for voltage in input_list:
-        dc.cv = voltage
-        dc.turn_on()
-
-        eload.channel[1].cc = Iout_max
-        eload.channel[1].turn_on()
+        ac.cv = voltage
+        ac.turn_on()
 
         soak(soak_time)
         pms.integrate(integration_time)
@@ -55,7 +52,7 @@ def test_line_regulation(input_list, soak_time=5, integration_time=10):
         iin = f"{pms.current*1000:.2f}"
         pin = f"{pms.power:.3f}"
         pf = f"{pms.pf:.4f}"
-        # thd = f"{pms.thd:.2f}"
+        thd = f"{pms.thd:.2f}"
         vo1 = f"{pml.voltage:.3f}"
         io1 = f"{pml.current*1000:.2f}"
         po1 = f"{pml.power:.3f}"
@@ -68,20 +65,19 @@ def test_line_regulation(input_list, soak_time=5, integration_time=10):
 
         print(','.join(output_list))
 
-    dc_reset()
+    ac_reset()
 
 def test_load_regulation(input_list, load_percent_list, line_soak_time, load_soak_time, integration_time=10):
-
     headers("Load Regulation")
 
-    print("vdc, vin, iin, pin, pf, vo1, io1, po1, vreg1, eff")
+    print("vdc, vin, iin, pin, pf, thd, vo1, io1, po1, eff")
     print()
 
     for voltage in input_list:
-        dc.cv = voltage
-        dc.turn_on()
+        ac.voltage = voltage
+        ac.turn_on()
 
-        eload.channel[1].cc = Iout_max
+        eload.channel[1].cc = 1.25
         eload.channel[1].turn_on()
         soak(line_soak_time)
 
@@ -109,7 +105,7 @@ def test_load_regulation(input_list, load_percent_list, line_soak_time, load_soa
             print(','.join(output_list))
         print("")
 
-    dc_reset()
+    ac_reset()
 
 def test_no_load(input_list, soak_time=5, integration_time=10):
     headers("No Load")
@@ -117,8 +113,8 @@ def test_no_load(input_list, soak_time=5, integration_time=10):
     print()
     
     for voltage in input_list:
-        dc.cv = voltage
-        dc.turn_on()
+        ac.cv = voltage
+        ac.turn_on()
 
         soak(soak_time)
         pms.integrate(integration_time)
@@ -135,34 +131,34 @@ def test_no_load(input_list, soak_time=5, integration_time=10):
 
         print(','.join(output_list))
 
-    dc_reset()
+    ac_reset()
 
 
-## main code ###############################################################
+## main code ##
 
 ## OUTPUT
-vout = 5
-Iout_max = 4 # A
+vout = 48
+Iout_max = 780 # A
 
-input_list = [100,115]  # dc voltages
+input_list = [90,115,230,265]  # dc voltages
 load_percent_list = [100, 75, 50, 25]
 
-integration_time = 5 #s
-soak_time = 5 #s
-load_soak_time = 3 #s
+integration_time = 120 #s
+soak_time = 1 #s
+load_soak_time = 1 #s
 
 
-test_line_regulation(input_list, soak_time, integration_time)
+# test_line_regulation(input_list, soak_time, integration_time)
 print()
 
 test_load_regulation(input_list, load_percent_list, soak_time, load_soak_time, integration_time)
 print()
 
-test_no_load(input_list, soak_time, integration_time)
+# test_no_load(input_list, soak_time, integration_time)
 print()
 
 
-############################################################################
+
 
 
 
