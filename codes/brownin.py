@@ -18,7 +18,7 @@ from powi.equipment import headers, create_folder, footers, waveform_counter
 from time import sleep, time
 import os
 import math
-
+input()
 # # initialize equipment
 ac = ACSource(ac_source_address)
 pms = PowerMeter(source_power_meter_address)
