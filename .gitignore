@@ -1,0 +1,30 @@
+# Virtual environment
+Lib/
+Scripts/
+Include/
+share/
+etc/
+pyvenv.cfg
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+build/
+dist/
+sfx/
+libs/
+*.spec
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Embedded repos (not submodules)
+codes - twitter_media_downloader/
+
+# Runtime / generated files
+last_folder.txt
+*.log
+file_searcher_outputs/
