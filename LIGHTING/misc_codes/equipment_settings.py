@@ -157,7 +157,130 @@ class EQUIPMENT_FUNCTIONS():
 
         def RECALL_SAVESET(self, address):
             scope.write(f"MMEM:RCL '{address}'")
-        
+
+        def RESET(self):
+            scope.reset()
+
+        def RECORD_LENGTH(self, record_length):
+            scope.record_length(record_length)
+
+        def RESOLUTION(self, resolution):
+            scope.resolution(resolution)
+
+        def AUTO_ZERO(self, channel):
+            scope.auto_zero(channel)
+
+        def FORCE_TRIGGER(self):
+            scope.force_trigger()
+
+        def TRIGGER_LEVEL(self, channel, level):
+            scope.trigger_level(channel, level)
+
+        def WIDTH_TRIGGER(self, channel, polarity='POS', range='LONG', width=100E-3, delta=0):
+            scope.width_trigger(channel, polarity, range, width, delta)
+
+        def DISPLAY_INTENSITY(self, intensity=100):
+            scope.display_intensity(intensity)
+
+        def CHANNEL_STATE(self, channel, state='OFF'):
+            scope.channel_state(channel, state)
+
+        def CHANNEL_COUPLING(self, channel, coupling):
+            scope.channel_coupling(channel, coupling)
+
+        def CHANNEL_POSITION(self, channel, position):
+            scope.channel_position(channel, position)
+
+        def CHANNEL_OFFSET(self, channel, offset):
+            scope.channel_offset(channel, offset)
+
+        def CHANNEL_COLOR(self, channel, color):
+            scope.channel_color(channel, color)
+
+        def MEASURE_ENABLE(self, channel, state='ON'):
+            scope.measure_enable(channel, state)
+
+        def MEASURE_SOURCE(self, channel):
+            scope.measure_source(channel)
+
+        def GET_MEASURE_DICT(self, channel=1):
+            return scope.get_measure_dict(channel)
+
+        def GET_HORIZONTAL(self):
+            return scope.get_horizontal()
+
+        def PROBE_ATTENUATION(self, channel=1):
+            return scope.probe_attenuation(channel)
+
+        def REMOVE_ZOOM(self):
+            scope.remove_zoom()
+
+        def ADD_ZOOM(self, rel_pos=50, rel_scale=10):
+            scope.add_zoom(rel_pos, rel_scale)
+
+        def ADD_ZOOM_WITH_GATE(self, rel_pos=50, rel_scale=10):
+            scope.add_zoom_with_gate(rel_pos, rel_scale)
+
+        # ── Utility / Calibration ────────────────────────────────────────────
+        def CALIBRATE(self):
+            scope.calibrate()
+
+        def DEGAUSS(self, channel):
+            scope.degauss(channel)
+
+        # ── Channel extras ────────────────────────────────────────────────────
+        def CHANNEL_INVERT(self, channel, state='OFF'):
+            scope.channel_invert(channel, state)
+
+        def CHANNEL_SKEW(self, channel, skew=0):
+            scope.channel_skew(channel, skew)
+
+        def GET_VERTICAL(self, channel=1):
+            return scope.get_vertical(channel)
+
+        # ── Acquisition ───────────────────────────────────────────────────────
+        def ACQUISITION_MODE(self, mode='NORM'):
+            """NORM | AVER | PDET | HRES"""
+            scope.acquisition_mode(mode)
+
+        def ACQUISITION_COUNT(self, count=8):
+            scope.acquisition_count(count)
+
+        def GET_ACQUISITION(self):
+            return scope.get_acquisition()
+
+        # ── Trigger extras ────────────────────────────────────────────────────
+        def RUNT_TRIGGER(self, channel, polarity='POS', high_limit=3.3, low_limit=0.5, delta_time=0):
+            scope.runt_trigger(channel, polarity, high_limit, low_limit, delta_time)
+
+        def SLEW_TRIGGER(self, channel, polarity='POS', slope_range='LONG', slew=1E9, delta=0):
+            scope.slew_trigger(channel, polarity, slope_range, slew, delta)
+
+        def TIMEOUT_TRIGGER(self, channel, timeout_range='HIGH', timeout_time=1E-3):
+            scope.timeout_trigger(channel, timeout_range, timeout_time)
+
+        def TRIGGER_HOLDOFF(self, mode='TIME', holdoff_time=0):
+            scope.trigger_holdoff(mode, holdoff_time)
+
+        def TRIGGER_MODE(self, mode):
+            scope.trigger_mode(mode)
+
+        def GET_TRIGGER_SETTINGS(self):
+            return scope.get_trigger_settings()
+
+        # ── Display extras ────────────────────────────────────────────────────
+        def PERSISTENCE(self, state='OFF', decay=0):
+            """state: OFF | INF | <seconds>"""
+            scope.persistence(state, decay)
+
+        # ── Read helpers ──────────────────────────────────────────────────────
+        def GET_ALL_CURSORS(self):
+            return scope.get_all_cursors()
+
+        def GET_FULL_SETTINGS(self):
+            return scope.get_full_settings()
+
+
 
     def ELOAD_CR_ON(self, channel, cr_load, von):
         eload.channel[channel].von = von
