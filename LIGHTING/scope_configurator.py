@@ -1,199 +1,207 @@
-import sys, os, json
+import sys, os, json, configparser
 _root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
 sys.path.insert(0, _root)
 from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *
 
-########################################## USER INPUT ##########################################
+CONFIG_FILE = os.path.join(_root, 'scope_config.ini')
 
-# ── Channels (1–4) ───────────────────────────────────────────────────────────
-# Set state='OFF' and omit other keys to turn a channel off.
-#
-# coupling options : DC | DCLimit | AC
-# bandwidth options: 500 (FULL) | 200 (B200) | 20 (B20)
-# color options    : LIGHT_BLUE | YELLOW | PINK | GREEN | BLUE | ORANGE
-# invert           : OFF | ON
-# skew             : deskew in seconds (e.g. 1E-9 for 1 ns)
 
-channel_config = {
-    1: dict(state='ON',  scale=1,   position=1,  offset=0, coupling='DCLimit', bandwidth=500, label='IDS', color='LIGHT_BLUE', rel_x_position=30, invert='OFF', skew=0),
-    2: dict(state='ON',  scale=200, position=-4, offset=0, coupling='DCLimit', bandwidth=500, label='VDS', color='YELLOW',     rel_x_position=40, invert='OFF', skew=0),
-    3: dict(state='OFF'),
-    4: dict(state='OFF'),
-}
+# ── Config file reader ────────────────────────────────────────────────────────
 
-# ── Horizontal ────────────────────────────────────────────────────────────────
-# acquisition_mode: NORM | AVER | PDET | HRES
-# acquisition_count: number of waveforms to average (used when mode=AVER)
+def _load_ini():
+    if not os.path.exists(CONFIG_FILE):
+        print(f"[ERROR] Config file not found: {CONFIG_FILE}")
+        sys.exit(1)
+    cfg = configparser.ConfigParser(inline_comment_prefixes=(';', '#'))
+    cfg.read(CONFIG_FILE)
+    return cfg
 
-horizontal_config = dict(
-    time_scale       = 5E-6,
-    time_position    = 20,
-    record_length    = 10_000,
-    acquisition_mode = 'NORM',
-    acquisition_count= 8,
-)
 
-# ── Trigger ───────────────────────────────────────────────────────────────────
-# type options   : EDGE | WIDT | TIM | RUNT | SLEW
-# mode options   : AUTO | NORM | FREERUN
-# slope options  : POS | NEG | EITH
-# width_range    : WITHin | OUTSide | SHORter | LONGer
-# timeout_range  : HIGH | LOW | EITHer
-# slew_range     : WITHin | OUTSide | SHORter | LONGer
-# holdoff_mode   : AUTO | TIME | RAND
+def _f(cfg, section, key, fallback=0.0):
+    return float(cfg.get(section, key, fallback=str(fallback)))
 
-trigger_config = dict(
-    type            = 'EDGE',
-    source_channel  = 1,
-    mode            = 'NORM',
-    holdoff_mode    = 'AUTO',
-    holdoff_time    = 0,
+def _i(cfg, section, key, fallback=0):
+    return int(float(cfg.get(section, key, fallback=str(fallback))))
 
-    # EDGE
-    edge_level      = 1.0,
-    edge_slope      = 'POS',
+def _s(cfg, section, key, fallback=''):
+    return cfg.get(section, key, fallback=str(fallback)).strip()
 
-    # WIDTH
-    width_polarity  = 'POS',
-    width_range     = 'LONGer',
-    width           = 100E-6,
-    width_delta     = 0,
 
-    # TIMEOUT
-    timeout_range   = 'HIGH',
-    timeout_time    = 1E-3,
+def load_config():
+    """Parse scope_config.ini and return structured dicts."""
+    cfg = _load_ini()
 
-    # RUNT
-    runt_polarity   = 'POS',
-    runt_high       = 3.3,
-    runt_low        = 0.5,
-    runt_delta_time = 0,
+    channel_config = {}
+    for ch in range(1, 5):
+        sec = f'Channel_{ch}'
+        if not cfg.has_section(sec):
+            channel_config[ch] = {'state': 'OFF'}
+            continue
+        state = _s(cfg, sec, 'state', 'OFF').upper()
+        if state == 'OFF':
+            channel_config[ch] = {'state': 'OFF'}
+        else:
+            channel_config[ch] = dict(
+                state        = 'ON',
+                scale        = _f(cfg, sec, 'scale',    1),
+                position     = _f(cfg, sec, 'position', 0),
+                offset       = _f(cfg, sec, 'offset',   0),
+                coupling     = _s(cfg, sec, 'coupling', 'DCLimit'),
+                bandwidth    = _i(cfg, sec, 'bandwidth', 500),
+                label        = _s(cfg, sec, 'label',    f'CH{ch}'),
+                color        = _s(cfg, sec, 'color',    'LIGHT_BLUE'),
+                rel_x_position = _i(cfg, sec, 'rel_x_pos', 50),
+                invert       = _s(cfg, sec, 'invert',   'OFF').upper(),
+                skew         = _f(cfg, sec, 'skew',     0),
+            )
 
-    # SLEW
-    slew_polarity   = 'POS',
-    slew_range      = 'LONGer',
-    slew_rate       = 1E9,
-    slew_delta      = 0,
-)
+    sec = 'Horizontal'
+    horizontal_config = dict(
+        time_scale        = _f(cfg, sec, 'time_scale',        5e-6),
+        time_position     = _i(cfg, sec, 'time_position',     20),
+        record_length     = _i(cfg, sec, 'record_length',     10000),
+        acquisition_mode  = _s(cfg, sec, 'acquisition_mode',  'NORM').upper(),
+        acquisition_count = _i(cfg, sec, 'acquisition_count', 8),
+    )
 
-# ── Measurements (8 slots) ────────────────────────────────────────────────────
-# types: comma-separated list of measurement type names.
-# Available: HIGH LOW AMPLitude MAXimum MINimum PDELta MEAN RMS STDDev
-#            POVershoot NOVershoot AREA RTIMe FTIMe PPULse NPULse
-#            PERiod FREQuency PDCYcle NDCYcle CYCarea CYCMean CYCRms
-#            CYCStddev PULCnt DELay PHASe BWIDth PSWitching NSWitching
-#            PULSetrain EDGecount SHT SHR DTOTrigger SLERising SLEFalling
+    sec = 'Trigger'
+    trigger_config = dict(
+        type            = _s(cfg, sec, 'type',           'EDGE').upper(),
+        source_channel  = _i(cfg, sec, 'source_channel', 1),
+        mode            = _s(cfg, sec, 'mode',           'NORM').upper(),
+        holdoff_mode    = _s(cfg, sec, 'holdoff_mode',   'AUTO').upper(),
+        holdoff_time    = _f(cfg, sec, 'holdoff_time',   0),
+        edge_level      = _f(cfg, sec, 'edge_level',     1.0),
+        edge_slope      = _s(cfg, sec, 'edge_slope',     'POS').upper(),
+        width_polarity  = _s(cfg, sec, 'width_polarity', 'POS').upper(),
+        width_range     = _s(cfg, sec, 'width_range',    'LONGer'),
+        width           = _f(cfg, sec, 'width',          100e-6),
+        width_delta     = _f(cfg, sec, 'width_delta',    0),
+        timeout_range   = _s(cfg, sec, 'timeout_range',  'HIGH').upper(),
+        timeout_time    = _f(cfg, sec, 'timeout_time',   1e-3),
+        runt_polarity   = _s(cfg, sec, 'runt_polarity',  'POS').upper(),
+        runt_high       = _f(cfg, sec, 'runt_high',      3.3),
+        runt_low        = _f(cfg, sec, 'runt_low',       0.5),
+        runt_delta_time = _f(cfg, sec, 'runt_delta_time',0),
+        slew_polarity   = _s(cfg, sec, 'slew_polarity',  'POS').upper(),
+        slew_range      = _s(cfg, sec, 'slew_range',     'LONGer'),
+        slew_rate       = _f(cfg, sec, 'slew_rate',      1e9),
+        slew_delta      = _f(cfg, sec, 'slew_delta',     0),
+    )
 
-measurement_config = {
-    1: dict(state='ON',  source_channel=1, types='MAXimum, PDELta, FREQuency, PDCYcle'),
-    2: dict(state='ON',  source_channel=2, types='MAXimum, PDELta'),
-    3: dict(state='OFF'),
-    4: dict(state='OFF'),
-    5: dict(state='OFF'),
-    6: dict(state='OFF'),
-    7: dict(state='OFF'),
-    8: dict(state='OFF'),
-}
+    measurement_config = {}
+    for slot in range(1, 9):
+        sec = f'Measurement_{slot}'
+        if not cfg.has_section(sec):
+            measurement_config[slot] = {'state': 'OFF'}
+            continue
+        state = _s(cfg, sec, 'state', 'OFF').upper()
+        if state == 'OFF':
+            measurement_config[slot] = {'state': 'OFF'}
+        else:
+            measurement_config[slot] = dict(
+                state          = 'ON',
+                source_channel = _i(cfg, sec, 'source_channel', slot if slot <= 4 else 1),
+                types          = _s(cfg, sec, 'types', 'PDELta'),
+            )
 
-# ── Cursors (4 sets) ──────────────────────────────────────────────────────────
-# type options: VERT | HOR | EITH (paired)
+    cursor_config = {}
+    for cset in range(1, 5):
+        sec = f'Cursor_{cset}'
+        if not cfg.has_section(sec):
+            cursor_config[cset] = {'state': 'OFF'}
+            continue
+        state = _s(cfg, sec, 'state', 'OFF').upper()
+        if state == 'OFF':
+            cursor_config[cset] = {'state': 'OFF'}
+        else:
+            cursor_config[cset] = dict(
+                state          = 'ON',
+                type           = _s(cfg, sec, 'type',           'VERT').upper(),
+                source_channel = _i(cfg, sec, 'source_channel', 1),
+                X1             = _f(cfg, sec, 'x1',             0),
+                X2             = _f(cfg, sec, 'x2',             1e-6),
+                Y1             = _f(cfg, sec, 'y1',             0),
+                Y2             = _f(cfg, sec, 'y2',             0),
+            )
 
-cursor_config = {
-    1: dict(state='ON',  type='VERT', source_channel=1, X1=0, X2=1E-6, Y1=0, Y2=0),
-    2: dict(state='OFF'),
-    3: dict(state='OFF'),
-    4: dict(state='OFF'),
-}
+    sec = 'Display'
+    pers_raw = _s(cfg, sec, 'persistence', 'OFF').upper()
+    display_config = dict(
+        intensity         = _i(cfg, sec, 'intensity', 100),
+        persistence       = pers_raw if pers_raw in ('OFF', 'INF') else _f(cfg, sec, 'persistence', 0),
+        persistence_decay = _f(cfg, sec, 'persistence_decay', 0),
+    )
 
-# ── Display ───────────────────────────────────────────────────────────────────
-# persistence: OFF | INF | <seconds float>
+    return channel_config, horizontal_config, trigger_config, measurement_config, cursor_config, display_config
 
-display_config = dict(
-    intensity        = 100,
-    persistence      = 'OFF',
-    persistence_decay= 0,
-)
 
-########################################## END USER INPUT ##########################################
-
+# ── Core actions ──────────────────────────────────────────────────────────────
 
 def push_to_scope(sc):
-    """Apply all settings from the USER INPUT section to the physical scope."""
-    print("\n[PUSH] Applying settings to RTO6...")
+    channel_config, horizontal_config, trigger_config, measurement_config, cursor_config, display_config = load_config()
+    print(f"\n[PUSH] Reading from: {CONFIG_FILE}")
+    print("[PUSH] Applying settings to RTO6...")
 
-    # Horizontal + Acquisition
     sc.POSITION_SCALE(horizontal_config['time_position'], horizontal_config['time_scale'])
     sc.RECORD_LENGTH(horizontal_config['record_length'])
     sc.ACQUISITION_MODE(horizontal_config['acquisition_mode'])
     if horizontal_config['acquisition_mode'] == 'AVER':
         sc.ACQUISITION_COUNT(horizontal_config['acquisition_count'])
-    print(f"  Horizontal : {horizontal_config['time_scale']}s/div, ref={horizontal_config['time_position']}%, {horizontal_config['record_length']} pts, {horizontal_config['acquisition_mode']}")
+    print(f"  Horizontal : {horizontal_config['time_scale']} s/div  ref={horizontal_config['time_position']}%  "
+          f"{horizontal_config['record_length']} pts  {horizontal_config['acquisition_mode']}")
 
-    # Channels
     for ch, cfg in channel_config.items():
-        if cfg.get('state', 'OFF') == 'OFF':
+        if cfg['state'] == 'OFF':
             sc.CHANNEL_SETTINGS(state='OFF', channel=ch)
             print(f"  CH{ch}       : OFF")
         else:
-            sc.CHANNEL_SETTINGS(
-                state        = 'ON',
-                channel      = ch,
-                scale        = cfg['scale'],
-                position     = cfg['position'],
-                offset       = cfg['offset'],
-                coupling     = cfg['coupling'],
-                bandwidth    = cfg['bandwidth'],
-                label        = cfg['label'],
-                color        = cfg['color'],
-                rel_x_position = cfg['rel_x_position'],
-            )
-            sc.CHANNEL_INVERT(ch, cfg.get('invert', 'OFF'))
-            sc.CHANNEL_SKEW(ch, cfg.get('skew', 0))
-            print(f"  CH{ch}       : {cfg['label']} {cfg['scale']}V/div  {cfg['coupling']}  BW={cfg['bandwidth']}MHz  pos={cfg['position']}")
+            sc.CHANNEL_SETTINGS(state='ON', channel=ch, scale=cfg['scale'], position=cfg['position'],
+                                offset=cfg['offset'], coupling=cfg['coupling'], bandwidth=cfg['bandwidth'],
+                                label=cfg['label'], color=cfg['color'], rel_x_position=cfg['rel_x_position'])
+            sc.CHANNEL_INVERT(ch, cfg['invert'])
+            sc.CHANNEL_SKEW(ch, cfg['skew'])
+            print(f"  CH{ch}       : {cfg['label']}  {cfg['scale']} V/div  {cfg['coupling']}  BW={cfg['bandwidth']} MHz")
 
-    # Trigger
     tc = trigger_config
     sc.TRIGGER_MODE(tc['mode'])
     sc.TRIGGER_HOLDOFF(tc['holdoff_mode'], tc['holdoff_time'])
-    ttype = tc['type']
     ch = tc['source_channel']
+    ttype = tc['type']
     if ttype == 'EDGE':
         sc.EDGE_TRIGGER(ch, tc['edge_level'], tc['edge_slope'])
-        print(f"  Trigger    : EDGE  CH{ch}  level={tc['edge_level']}  {tc['edge_slope']}")
+        print(f"  Trigger    : EDGE  CH{ch}  {tc['edge_level']} V  {tc['edge_slope']}")
     elif ttype == 'WIDT':
         sc.WIDTH_TRIGGER(ch, tc['width_polarity'], tc['width_range'], tc['width'], tc['width_delta'])
-        print(f"  Trigger    : WIDTH  CH{ch}  pol={tc['width_polarity']}  {tc['width_range']}  {tc['width']}s")
+        print(f"  Trigger    : WIDTH  CH{ch}  {tc['width_polarity']}  {tc['width_range']}  {tc['width']} s")
     elif ttype == 'TIM':
         sc.TIMEOUT_TRIGGER(ch, tc['timeout_range'], tc['timeout_time'])
-        print(f"  Trigger    : TIMEOUT  CH{ch}  {tc['timeout_range']}  {tc['timeout_time']}s")
+        print(f"  Trigger    : TIMEOUT  CH{ch}  {tc['timeout_range']}  {tc['timeout_time']} s")
     elif ttype == 'RUNT':
         sc.RUNT_TRIGGER(ch, tc['runt_polarity'], tc['runt_high'], tc['runt_low'], tc['runt_delta_time'])
-        print(f"  Trigger    : RUNT  CH{ch}  pol={tc['runt_polarity']}  hi={tc['runt_high']}  lo={tc['runt_low']}")
+        print(f"  Trigger    : RUNT  CH{ch}  hi={tc['runt_high']} V  lo={tc['runt_low']} V")
     elif ttype == 'SLEW':
         sc.SLEW_TRIGGER(ch, tc['slew_polarity'], tc['slew_range'], tc['slew_rate'], tc['slew_delta'])
-        print(f"  Trigger    : SLEW  CH{ch}  pol={tc['slew_polarity']}  {tc['slew_range']}  {tc['slew_rate']} V/s")
+        print(f"  Trigger    : SLEW  CH{ch}  {tc['slew_rate']} V/s")
 
-    # Measurements
     for slot, cfg in measurement_config.items():
-        if cfg.get('state', 'OFF') == 'OFF':
+        if cfg['state'] == 'OFF':
             sc.MEASURE_ENABLE(slot, 'OFF')
         else:
             sc.MEASURE_ENABLE(slot, 'ON')
             sc.MEASURE_SOURCE(cfg['source_channel'])
             scope.measure(slot, cfg['types'])
-            print(f"  Meas slot {slot}: CH{cfg['source_channel']}  {cfg['types']}")
+            print(f"  Meas {slot}     : CH{cfg['source_channel']}  {cfg['types']}")
 
-    # Cursors
     for cset, cfg in cursor_config.items():
-        if cfg.get('state', 'OFF') == 'OFF':
+        if cfg['state'] == 'OFF':
             scope.write(f'CURS{cset}:STAT OFF')
         else:
             sc.CURSOR(cfg['source_channel'], cset, cfg['X1'], cfg['X2'], cfg['Y1'], cfg['Y2'], cfg['type'])
             print(f"  Cursor {cset}   : {cfg['type']}  CH{cfg['source_channel']}  X1={cfg['X1']}  X2={cfg['X2']}")
 
-    # Display
     sc.DISPLAY_INTENSITY(display_config['intensity'])
     sc.PERSISTENCE(display_config['persistence'], display_config['persistence_decay'])
     print(f"  Display    : intensity={display_config['intensity']}%  persistence={display_config['persistence']}")
@@ -201,41 +209,35 @@ def push_to_scope(sc):
 
 
 def read_from_scope(sc):
-    """Query all settings from the physical scope and print a formatted report."""
-    print("\n[READ] Reading settings from RTO6...")
+    print("\n[READ] Reading all settings from RTO6...")
     print("=" * 60)
 
-    # Horizontal + Acquisition
-    h = sc.GET_HORIZONTAL()
+    h   = sc.GET_HORIZONTAL()
     acq = sc.GET_ACQUISITION()
-    print(f"HORIZONTAL")
-    print(f"  Time scale   : {h['scale']} s/div")
-    print(f"  Ref position : {h['position']} %")
-    print(f"  Resolution   : {h['resolution']} s")
-    print(f"  Sample rate  : {acq['sample_rate']} Sa/s")
-    print(f"ACQUISITION")
-    print(f"  Mode         : {acq['mode']}")
-    print(f"  Count        : {acq['count']}")
-    print(f"  Record length: {acq['record_length']} pts")
+    print("HORIZONTAL")
+    print(f"  Time scale    : {h['scale']} s/div")
+    print(f"  Ref position  : {h['position']} %")
+    print(f"  Resolution    : {h['resolution']} s")
+    print(f"  Sample rate   : {acq['sample_rate']} Sa/s")
+    print("ACQUISITION")
+    print(f"  Mode          : {acq['mode']}")
+    print(f"  Count         : {acq['count']}")
+    print(f"  Record length : {acq['record_length']} pts")
 
-    # Channels
-    print(f"\nCHANNELS")
+    print("\nCHANNELS")
     for ch in range(1, 5):
         v = sc.GET_VERTICAL(ch)
         if v:
-            print(f"  CH{ch}: scale={v['scale']} V/div  pos={v['position']}  offset={v['offset']} V  "
+            print(f"  CH{ch}: {v['scale']} V/div  pos={v['position']}  offs={v['offset']} V  "
                   f"{v['coupling']}  BW={v['bandwidth']}  pol={v.get('polarity','?')}  deskew={v.get('deskew',0)} s")
         else:
             print(f"  CH{ch}: OFF")
 
-    # Trigger
-    print(f"\nTRIGGER")
-    trig = sc.GET_TRIGGER_SETTINGS()
-    for k, v in trig.items():
-        print(f"  {k:15s}: {v}")
+    print("\nTRIGGER")
+    for k, v in sc.GET_TRIGGER_SETTINGS().items():
+        print(f"  {k:16s}: {v}")
 
-    # Measurements
-    print(f"\nMEASUREMENTS")
+    print("\nMEASUREMENTS")
     for slot in range(1, 9):
         try:
             d = sc.GET_MEASURE_DICT(slot)
@@ -244,18 +246,19 @@ def read_from_scope(sc):
             else:
                 print(f"  Slot {slot}: OFF")
         except:
-            print(f"  Slot {slot}: (error reading)")
+            print(f"  Slot {slot}: (error)")
 
-    # Cursors
-    print(f"\nCURSORS")
+    print("\nCURSORS")
     cursors = sc.GET_ALL_CURSORS()
     if cursors:
         for name, c in cursors.items():
-            print(f"  {name}: src={c.get('source','?')}  "
-                  f"X1={c.get('x1 position',0):.4g}  X2={c.get('x2 position',0):.4g}  "
-                  f"ΔX={c.get('delta x',0):.4g}  "
-                  f"Y1={c.get('y1 position',0):.4g}  Y2={c.get('y2 position',0):.4g}  "
-                  f"ΔY={c.get('delta y',0):.4g}")
+            dx = c.get('delta x', 0)
+            dy = c.get('delta y', 0)
+            freq = (1.0 / dx) if dx else float('inf')
+            print(f"  {name}  src={c.get('source','?')}")
+            print(f"    X1={c.get('x1 position',0):.4g} s  X2={c.get('x2 position',0):.4g} s  "
+                  f"ΔX={dx:.4g} s  ({freq:.4g} Hz)")
+            print(f"    Y1={c.get('y1 position',0):.4g}  Y2={c.get('y2 position',0):.4g}  ΔY={dy:.4g}")
     else:
         print("  No cursors active.")
 
@@ -264,37 +267,71 @@ def read_from_scope(sc):
     return sc.GET_FULL_SETTINGS()
 
 
-def save_config(sc, filename=None):
-    """Read all scope settings and save to a JSON file."""
+def save_config_from_scope(sc, filename=None):
+    """Snapshot the live scope settings and write them to a JSON file."""
     if filename is None:
         gf = GENERAL_FUNCTIONS()
-        ts = gf.GET_TIME_STRING()
-        filename = f"scope_config_{ts}.json"
-
+        filename = f"scope_snapshot_{gf.GET_TIME_STRING()}.json"
     settings = sc.GET_FULL_SETTINGS()
     with open(filename, 'w') as f:
         json.dump(settings, f, indent=2)
-    print(f"[SAVE] Config saved to: {filename}\n")
+    print(f"[SAVE] Snapshot saved to: {filename}\n")
     return filename
 
 
-def load_and_apply_config(sc, filename):
-    """Load a previously saved JSON config and apply it to the scope."""
+def save_ini_from_scope(sc):
+    """Read live scope settings and overwrite scope_config.ini."""
+    settings = sc.GET_FULL_SETTINGS()
+    cfg = _load_ini()
+
+    h   = settings.get('horizontal', {})
+    acq = settings.get('acquisition', {})
+    if h and cfg.has_section('Horizontal'):
+        cfg.set('Horizontal', 'time_scale',        str(h.get('scale', 5e-6)))
+        cfg.set('Horizontal', 'time_position',     str(int(h.get('position', 20))))
+        cfg.set('Horizontal', 'record_length',     str(acq.get('record_length', 10000)))
+        cfg.set('Horizontal', 'acquisition_mode',  acq.get('mode', 'NORM'))
+        cfg.set('Horizontal', 'acquisition_count', str(acq.get('count', 8)))
+
+    for key, ch_cfg in settings.get('channels', {}).items():
+        ch = key.replace('ch', '')
+        sec = f'Channel_{ch}'
+        if not cfg.has_section(sec):
+            cfg.add_section(sec)
+        if ch_cfg.get('state', 'OFF') == 'OFF':
+            cfg.set(sec, 'state', 'OFF')
+        else:
+            cfg.set(sec, 'state',     'ON')
+            cfg.set(sec, 'scale',     str(ch_cfg.get('scale', 1)))
+            cfg.set(sec, 'position',  str(ch_cfg.get('position', 0)))
+            cfg.set(sec, 'offset',    str(ch_cfg.get('offset', 0)))
+            cfg.set(sec, 'coupling',  ch_cfg.get('coupling', 'DCLimit'))
+            bw = ch_cfg.get('bandwidth', 'FULL')
+            cfg.set(sec, 'bandwidth', '500' if bw == 'FULL' else ('200' if '200' in str(bw) else '20'))
+
+    trig = settings.get('trigger', {})
+    if trig and cfg.has_section('Trigger'):
+        for k, v in trig.items():
+            cfg.set('Trigger', k, str(v))
+
+    with open(CONFIG_FILE, 'w') as f:
+        cfg.write(f)
+    print(f"[SAVE] scope_config.ini updated from live scope settings.\n")
+
+
+def load_json_and_apply(sc, filename):
+    """Apply a previously saved JSON snapshot to the scope."""
     if not os.path.exists(filename):
         print(f"[LOAD] File not found: {filename}")
         return
-
     with open(filename) as f:
         settings = json.load(f)
 
-    print(f"[LOAD] Applying config from: {filename}")
-
     h = settings.get('horizontal', {})
-    if h:
-        scope.time_scale(h.get('scale', 5E-6))
-        scope.time_position(h.get('position', 20))
-
     acq = settings.get('acquisition', {})
+    if h:
+        scope.time_scale(h.get('scale', 5e-6))
+        scope.time_position(h.get('position', 20))
     if acq:
         sc.ACQUISITION_MODE(acq.get('mode', 'NORM'))
         sc.ACQUISITION_COUNT(acq.get('count', 8))
@@ -302,16 +339,14 @@ def load_and_apply_config(sc, filename):
 
     for key, ch_cfg in settings.get('channels', {}).items():
         ch = int(key.replace('ch', ''))
-        if ch_cfg.get('state', 'OFF') == 'ON':
-            scope.channel_settings('ON', ch,
-                scale    = ch_cfg.get('scale', 1),
-                position = ch_cfg.get('position', 0),
-                offset   = ch_cfg.get('offset', 0),
-                coupling = ch_cfg.get('coupling', 'DCLimit'),
-                bandwidth= 500 if ch_cfg.get('bandwidth', 'FULL') == 'FULL' else (200 if '200' in str(ch_cfg.get('bandwidth', '')) else 20),
-            )
-        else:
+        if ch_cfg.get('state', 'OFF') == 'OFF':
             scope.channel_state(ch, 'OFF')
+        else:
+            bw = ch_cfg.get('bandwidth', 'FULL')
+            bw_val = 500 if bw == 'FULL' else (200 if '200' in str(bw) else 20)
+            scope.channel_settings('ON', ch, scale=ch_cfg.get('scale', 1),
+                position=ch_cfg.get('position', 0), offset=ch_cfg.get('offset', 0),
+                coupling=ch_cfg.get('coupling', 'DCLimit'), bandwidth=bw_val)
 
     trig = settings.get('trigger', {})
     if trig:
@@ -322,64 +357,59 @@ def load_and_apply_config(sc, filename):
         if 'EDGE' in ttype:
             scope.edge_trigger(ch, trig.get('level', 1.0), trig.get('slope', 'POS'))
         elif 'WIDT' in ttype:
-            scope.width_trigger(ch, trig.get('polarity', 'POS'), trig.get('range', 'LONGer'), trig.get('width', 100E-6), trig.get('delta', 0))
+            scope.width_trigger(ch, trig.get('polarity', 'POS'), trig.get('range', 'LONGer'),
+                                trig.get('width', 100e-6), trig.get('delta', 0))
         elif 'TIM' in ttype:
-            scope.timeout_trigger(ch, trig.get('timeout_range', 'HIGH'), trig.get('timeout_time', 1E-3))
-
-    print("[LOAD] Done.\n")
+            scope.timeout_trigger(ch, trig.get('timeout_range', 'HIGH'), trig.get('timeout_time', 1e-3))
+    print(f"[LOAD] Applied: {filename}\n")
 
 
 def auto_zero_all(sc):
-    """Run auto-zero (offset correction) on all active channels."""
-    print("[AUTO-ZERO] Running auto-zero on active channels...")
+    print("[AUTO-ZERO] Running on active channels...")
     for ch in range(1, 5):
-        state = scope.write(f'CHAN{ch}:STAT?')
-        if state == '1':
+        if scope.write(f'CHAN{ch}:STAT?') == '1':
             sc.AUTO_ZERO(ch)
-            print(f"  CH{ch}: auto-zero done.")
-    print("[AUTO-ZERO] Done.\n")
-
-
-def degauss_channel(sc, channel):
-    """Degauss a current probe on the specified channel."""
-    print(f"[DEGAUSS] Degaussing probe on CH{channel}...")
-    sc.DEGAUSS(channel)
-    print("[DEGAUSS] Done.\n")
+            print(f"  CH{ch}: done.")
+    print("[AUTO-ZERO] Complete.\n")
 
 
 def read_cursors(sc):
-    """Print a clean cursor readout."""
     cursors = sc.GET_ALL_CURSORS()
     if not cursors:
-        print("[CURSORS] No cursors active.")
+        print("[CURSORS] No cursors active.\n")
         return
     print("\n[CURSORS]")
     for name, c in cursors.items():
         dx = c.get('delta x', 0)
         dy = c.get('delta y', 0)
-        freq = (1.0 / dx) if dx and dx != 0 else float('inf')
+        freq = (1.0 / dx) if dx else float('inf')
         print(f"  {name}  src={c.get('source','?')}")
-        print(f"    X1={c.get('x1 position',0):.6g} s    X2={c.get('x2 position',0):.6g} s    ΔX={dx:.6g} s  ({freq:.4g} Hz)")
-        print(f"    Y1={c.get('y1 position',0):.6g}      Y2={c.get('y2 position',0):.6g}      ΔY={dy:.6g}")
+        print(f"    X1={c.get('x1 position',0):.6g} s   X2={c.get('x2 position',0):.6g} s   "
+              f"ΔX={dx:.6g} s  →  {freq:.4g} Hz")
+        print(f"    Y1={c.get('y1 position',0):.6g}   Y2={c.get('y2 position',0):.6g}   ΔY={dy:.6g}")
     print()
 
 
+# ── Menu ──────────────────────────────────────────────────────────────────────
+
 def _menu():
-    print("=" * 50)
+    print("=" * 52)
     print("  RTO6 Scope Configurator")
-    print("=" * 50)
-    print("  1  Push USER INPUT settings to scope")
-    print("  2  Read all settings from scope")
-    print("  3  Save scope settings to JSON")
-    print("  4  Load & apply JSON config file")
-    print("  5  Read cursor values")
-    print("  6  Auto-zero active channels")
-    print("  7  Degauss probe (enter channel)")
-    print("  8  Calibrate scope (CAL:AUT ONCE)")
-    print("  9  Reset scope (*RST)")
-    print("  0  Exit")
-    print("=" * 50)
-    return input(">> Choice: ").strip()
+    print(f"  Config: scope_config.ini")
+    print("=" * 52)
+    print("  1  Push  scope_config.ini  →  scope")
+    print("  2  Read  scope  →  print all settings")
+    print("  3  Save  scope  →  scope_config.ini  (overwrite)")
+    print("  4  Save  scope  →  JSON snapshot file")
+    print("  5  Load  JSON snapshot  →  scope")
+    print("  6  Read cursor values")
+    print("  7  Auto-zero active channels")
+    print("  8  Degauss probe (enter channel)")
+    print("  9  Calibrate scope  (CAL:AUT ONCE)")
+    print("  0  Reset scope  (*RST)  then exit")
+    print("  Q  Quit")
+    print("=" * 52)
+    return input(">> Choice: ").strip().upper()
 
 
 def main():
@@ -395,39 +425,46 @@ def main():
             read_from_scope(sc)
 
         elif choice == '3':
-            fname = input(">> Filename (leave blank for auto): ").strip() or None
-            save_config(sc, fname)
+            confirm = input(">> Overwrite scope_config.ini with live scope settings? (y/N): ").strip().lower()
+            if confirm == 'y':
+                save_ini_from_scope(sc)
 
         elif choice == '4':
-            fname = input(">> JSON file path: ").strip()
-            load_and_apply_config(sc, fname)
+            fname = input(">> Filename (blank = auto): ").strip() or None
+            save_config_from_scope(sc, fname)
 
         elif choice == '5':
-            read_cursors(sc)
+            fname = input(">> JSON file path: ").strip()
+            load_json_and_apply(sc, fname)
 
         elif choice == '6':
-            auto_zero_all(sc)
+            read_cursors(sc)
 
         elif choice == '7':
-            ch = input(">> Channel (1-4): ").strip()
-            if ch.isdigit() and 1 <= int(ch) <= 4:
-                degauss_channel(sc, int(ch))
-            else:
-                print("Invalid channel.")
+            auto_zero_all(sc)
 
         elif choice == '8':
-            print("[CALIBRATE] Running scope auto-calibration...")
+            ch = input(">> Channel (1–4): ").strip()
+            if ch.isdigit() and 1 <= int(ch) <= 4:
+                print(f"[DEGAUSS] CH{ch}...")
+                sc.DEGAUSS(int(ch))
+                print("[DEGAUSS] Done.\n")
+            else:
+                print("Invalid channel.\n")
+
+        elif choice == '9':
+            print("[CALIBRATE] Running auto-calibration...")
             sc.CALIBRATE()
             print("[CALIBRATE] Done.\n")
 
-        elif choice == '9':
-            confirm = input(">> Reset scope? This clears all settings. (y/N): ").strip().lower()
+        elif choice == '0':
+            confirm = input(">> Reset scope and exit? (y/N): ").strip().lower()
             if confirm == 'y':
                 sc.RESET()
-                print("[RESET] Scope reset.\n")
+                print("[RESET] Done.")
+                break
 
-        elif choice == '0':
-            print("Exiting.")
+        elif choice == 'Q':
             break
 
         else:
