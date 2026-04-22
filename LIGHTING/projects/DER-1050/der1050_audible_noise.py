@@ -1,4 +1,7 @@
-import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
+﻿import sys, os
+_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
+sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
+sys.path.insert(0, _root)
 from xml.sax.handler import feature_external_ges
 from powi.equipment import Keithley_DC_2230G
 import pyautogui

@@ -6,19 +6,13 @@ from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *
 ########################################## USER INPUT ##########################################
 # INPUT
-vin_list = [195, 200, 230, 240, 265]
-soak_time = 60
+vin_list = [180, 230, 265]
+soak_time = 1
 
 # OUTPUT
-vout_nom_1 = 36
-iout_nom_1 = 1.2
-
-vout_nom_2 = 6
-iout_nom_2 = 0.5
-iout2_list = [0, 0.5]
-
-vout_nom_3 = 12
-iout_nom_3 = 1.2
+vout_nom_1 = 28
+iout_nom_1 = 2.9
+iout_list = [0, 2.9]
 
 # PROJECT DETAILS
 gf = GENERAL_FUNCTIONS()
@@ -27,17 +21,18 @@ time_string = gf.GET_TIME_STRING()
 username = gf.GET_USERNAME()
 
 project_type = "DER"
-project_name = "DER-1081"
-results_folder = "07 - Test Data"
+project_name = "DER-1113"
+results_folder = "2. Data Result Spreadsheet"
+unit_no = "1"
+unit = f"Rev A_{unit_no}"
 test_name = "IDS VDS Steady State"
-unit = f"{test_name}_{vout_nom_1}V"
-excel_name = f"{unit}_{time_string}"
+excel_name = f"{unit_no}_{test_name}_{time_string}"
 
 channel_to_trigger = 1
 channel_trigger_delta = 0.01
 scope_channel_list = [1]
 
-waveforms_folder = path_maker(f"C:/Users/{username}/Documents/Charles/Work/{project_type}/{project_name}/{results_folder}/{dt_string}/{unit}/{test_name}/")
+waveforms_folder = path_maker(f"C:/Users/{username}/Documents/Charles/Work/{project_type}/{project_name}/{results_folder}/{unit}/{test_name}/")
 ########################################## USER INPUT ##########################################
 
 
@@ -50,29 +45,29 @@ def main():
     sc.CHANNEL_SETTINGS(state='ON', channel=1, scale=1, position=1, label="IDS", color='LIGHT_BLUE', rel_x_position=30, bandwidth=500, coupling='DCLimit', offset=0)
     sc.CHANNEL_SETTINGS(state='ON', channel=2, scale=200, position=-4, label="VDS", color='YELLOW', rel_x_position=40, bandwidth=500, coupling='DCLimit', offset=0)
 
-    header_list = GENERAL_CONSTANTS.HEADER_LIST_1CV_1CC_PARAMETRICS[:]
+    header_list = GENERAL_CONSTANTS.HEADER_LIST_1CC_NORMAL[:]
     for channel in scope_channel_list:
         header_list = ef.APPEND_SCOPE_LABELS(header_list, channel)
     print(header_list)
     df = gf.CREATE_DF_WITH_HEADER(header_list)
 
-    ef.MULTIPLE_ELOAD_CC_ON(iout_nom_1, iout_nom_2, iout_nom_3)
+    ef.MULTIPLE_ELOAD_CC_ON(iout_nom_1, iout_nom_1, iout_nom_1)
 
-    for iout2 in iout2_list:
+    for iout in iout_list:
         for vin in vin_list:
 
             sc.RUN()
-            ef.MULTIPLE_ELOAD_CC_ON(iout_nom_1, iout2, iout_nom_3)
+            ef.MULTIPLE_ELOAD_CC_ON(iout, iout, iout)
             ef.AC_TURN_ON(vin)
             soak(soak_time)
             ef.FIND_TRIGGER(channel_to_trigger, channel_trigger_delta)
             sc.RUN_SINGLE()
             soak(2)
-            filename = f"{test_name} {vin}VAC {vout_nom_1}V{iout_nom_1}A {vout_nom_2}V{iout2}A"
+            filename = f"{test_name} {vin}VAC {vout_nom_1}V{iout}A"
             sc.STOP()
             sc.SCOPE_SCREENSHOT(filename, waveforms_folder)
 
-            output_list = ef.COLLECT_DATA_1CV_1CC_PARAMETRICS(vin, vout_nom_1, vout_nom_2, iout_nom_1, iout2, scope_channel_list)
+            output_list = ef.COLLECT_DATA_SINGLE_OUTPUT_CC_LOAD_NORMAL_with_ripple(vin, vout_nom_1, iout_nom_1, scope_channel_list)
             export_to_excel(df, waveforms_folder, output_list, excel_name=excel_name, sheet_name=test_name, anchor="A1")
 
     gf.PRINT_FINAL_DATA_DF(df)

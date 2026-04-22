@@ -1,4 +1,7 @@
-import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
+﻿import sys, os
+_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
+sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
+sys.path.insert(0, _root)
 # from misc_codes.scope_setter import scope_settings
 # from misc_codes.scope_settings_fod import SCOPE_CONFIG
 # scope_settings(SCOPE_CONFIG)

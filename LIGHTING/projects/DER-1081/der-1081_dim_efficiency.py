@@ -1,4 +1,7 @@
-import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
+﻿import sys, os
+_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
+sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
+sys.path.insert(0, _root)
 from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *
 ########################################## USER INPUT ##########################################
@@ -73,7 +76,7 @@ def main():
 
     for iout2 in iout2_list:
         for vin in vin_list:
-            for load_1 in range(100, -1, -1):  # 100 → 0
+            for load_1 in range(100, -1, -1):  # 100 â†’ 0
 
                 if load_1 == 100:
                     EQUIPMENT_FUNCTIONS().SIG_GEN(99, dim_freq)
