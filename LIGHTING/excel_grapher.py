@@ -1,0 +1,83 @@
+import pandas as pd
+import glob
+import os
+from openpyxl import load_workbook
+from openpyxl.chart import ScatterChart, Reference, Series
+
+def list_excel_files(path):
+    os.chdir(path)
+    return glob.glob("*.xls*")
+
+def create_scatter_chart(df, x_col, y_cols):
+    chart = ScatterChart()
+    chart.title = f"{x_col} vs {', '.join(y_cols)}"
+    chart.x_axis.title = x_col
+    chart.y_axis.title = ', '.join(y_cols)
+
+    for y_col in y_cols:
+        x_values = Reference(df, min_col=df[x_col].col_idx, min_row=2, max_row=df.shape[0] + 1)
+        y_values = Reference(df, min_col=df[y_col].col_idx, min_row=2, max_row=df.shape[0] + 1)
+        series = Series(y_values, x_values, title=y_col)
+        chart.series.append(series)
+
+    return chart
+
+
+def read_excel_data(file_path):
+    df = pd.read_excel(file_path, engine='openpyxl', skiprows=1)  # Skip first row (headers)
+    df = df.iloc[:, 1:]  # Start from column B
+    last_row = df.shape[0]
+    last_col = df.shape[1]
+    df = df.iloc[:last_row, :last_col]  # Ends with the shape of DataFrame
+    print(df)
+    return df
+
+def main():
+    path = input("Please enter the path to the Excel files: ")
+    excel_files = list_excel_files(path)
+    print("\nAvailable Excel files:")
+    for i, file in enumerate(excel_files, start=1):
+        print(f"{i}. {file}")
+
+    file_idx = int(input("\nEnter the index of the file to use: ")) - 1
+    file_path = os.path.join(path, excel_files[file_idx])
+
+    df = read_excel_data(file_path)
+    wb = load_workbook(file_path)
+    charts_sheet = wb.create_sheet("charts")
+    chart_col = 2
+
+    while True:
+        print("\nAvailable columns:")
+        for col in df.columns:
+            print(col)
+        
+        x_col = input("\nEnter the column name for the x-axis: ")
+        y_cols = []
+
+        while True:
+            remaining_cols = [col for col in df.columns if col != x_col and col not in y_cols]
+            print("\nRemaining columns:")
+            for col in remaining_cols:
+                print(col)
+            
+            y_col = input("\nEnter the column name for the y-axis: ")
+            y_cols.append(y_col)
+            
+            more_y = input("\nDo you want to add more y-axis data? (y/n): ")
+            if more_y.lower() != 'y':
+                break
+
+        chart = create_scatter_chart(df, x_col, y_cols)
+        charts_sheet.add_chart(chart, f"B{chart_col}")
+        chart_col += 15
+
+        more_charts = input("\nDo you want to create more charts? (y/n): ")
+        if more_charts.lower() != 'y':
+            break
+
+    wb.save(file_path)
+    print("\nFinished. Charts added to the 'charts' sheet.")
+
+if __name__ == "__main__":
+    main()

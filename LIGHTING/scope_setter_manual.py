@@ -1,0 +1,3 @@
+from misc_codes.scope_setter import scope_settings
+from misc_codes.scope_settings_bosch import SCOPE_CONFIG
+scope_settings(SCOPE_CONFIG)
