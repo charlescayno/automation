@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="logo">
+    <file>screenshot-logo.png</file>
+    <file>pi-logo.png</file>
+  </qresource>
+</RCC>

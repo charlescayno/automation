@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>470</width>
+    <height>76</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QSplitter" name="splitter">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>438</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <widget class="QToolButton" name="comms">
+     <property name="text">
+      <string>COMMS</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="input_voltage_label">
+     <property name="text">
+      <string>Input Voltage</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="input_voltage">
+     <property name="text">
+      <string>120</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="input_type">
+     <item>
+      <property name="text">
+       <string>AC</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>DC</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QPushButton" name="AC_ON">
+     <property name="text">
+      <string>ON</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="AC_OFF">
+     <property name="text">
+      <string>OFF</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>470</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuAC_Gui">
+    <property name="title">
+     <string>AC Gui</string>
+    </property>
+    <addaction name="separator"/>
+   </widget>
+   <addaction name="menuAC_Gui"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
