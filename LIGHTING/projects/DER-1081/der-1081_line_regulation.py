@@ -1,4 +1,4 @@
-﻿import sys, os
+import sys, os
 _root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
 sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
 sys.path.insert(0, _root)
@@ -15,7 +15,7 @@ soak_time_per_load = 30
 
 soak_time = 5
 soak_time_per_line = 5
-soak_time_per_load = 30
+soak_time_per_load = 3
 
 # OUTPUT
 vout_nom_1 = 48
@@ -26,7 +26,7 @@ iout_nom_2 = 0.5
 iout2_list = [0.5]
 
 vout_nom_3 = 12
-iout_nom_3 = 1.2
+iout_nom_3 = 0.5
 
 
 # PROJECT DETAILS
@@ -45,6 +45,7 @@ rework = "_"
 scope_channel_list = [1]
 
 dim_freq = 10000
+bypass_sig_gen = True
 
 
 vds_channel = 1
@@ -55,7 +56,8 @@ waveforms_folder = path
 
 
 def ENABLE_DIMMING():
-    EQUIPMENT_FUNCTIONS().SIG_GEN(99, 1000)
+    if not bypass_sig_gen:
+        EQUIPMENT_FUNCTIONS().SIG_GEN(99, 1000)
 
 def LOAD_LIST(load_increment):
     temp_list = list(np.arange(0, 100+load_increment, load_increment))
@@ -76,7 +78,8 @@ def main():
     load_list_1b = np.arange(4, 101, 1)
     print(load_list_1b)
 
-    EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
+    if not bypass_sig_gen:
+        EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
     
     # EQUIPMENT_FUNCTIONS().SIG_GEN(99, dim_freq)
     # input("Change code this is an intervention just to use dimming hahaha.J ")
@@ -98,12 +101,13 @@ def main():
 
 
         for load_1 in load_list_1a:
-            if load_1 >= 99:
-                ENABLE_DIMMING()
-            elif load_1 == 0:
-                EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
-            else:
-                EQUIPMENT_FUNCTIONS().SIG_GEN(load_1, dim_freq)
+            if not bypass_sig_gen:
+                if load_1 >= 99:
+                    ENABLE_DIMMING()
+                elif load_1 == 0:
+                    EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
+                else:
+                    EQUIPMENT_FUNCTIONS().SIG_GEN(load_1, dim_freq)
             
             for iout2 in iout2_list:
                 EQUIPMENT_FUNCTIONS().SCOPE().RUN()
@@ -120,12 +124,13 @@ def main():
 
 
         for load_2 in load_list_1b:
-            if load_2 >= 99:
-                ENABLE_DIMMING()
-            elif load_2 == 0:
-                EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
-            else:
-                EQUIPMENT_FUNCTIONS().SIG_GEN(load_2, dim_freq)
+            if not bypass_sig_gen:
+                if load_2 >= 99:
+                    ENABLE_DIMMING()
+                elif load_2 == 0:
+                    EQUIPMENT_FUNCTIONS().SIG_GEN(0.002, dim_freq)
+                else:
+                    EQUIPMENT_FUNCTIONS().SIG_GEN(load_2, dim_freq)
             
             for iout2 in iout2_list:
                 EQUIPMENT_FUNCTIONS().SCOPE().RUN()

@@ -1,6 +1,6 @@
 
 class EQUIPMENT_ADDRESS():
-    SCOPE = "10.126.240.109"
+    SCOPE = "10.126.240.122"
     
     AC_SOURCE = 12
     DC_SOURCE = 10

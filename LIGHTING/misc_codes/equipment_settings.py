@@ -77,6 +77,13 @@ class EQUIPMENT_FUNCTIONS():
         soak(1)
 
     class SCOPE():
+
+        def write(self, command):
+            scope.write(command)
+
+        def trigger_status(self):
+            return scope.trigger_status()
+
         def SCOPE_SCREENSHOT(self, filename, path):
             global waveform_counter
             scope.get_screenshot(filename + '.png', path)
@@ -348,6 +355,7 @@ class EQUIPMENT_FUNCTIONS():
         for _ in range(times):
             for ch in range(1, 9):
                 eload.channel[ch].short_on()
+                # eload.channel[ch].cc = 2
                 eload.channel[ch].turn_on()
             sleep(1)
             for ch in range(1, 9):
@@ -866,19 +874,41 @@ class EQUIPMENT_FUNCTIONS():
 
         return output_list
 
-    def APPEND_SCOPE_LABELS(self, header_list, channel):
-        """
-            Append labels for the specified channel to the current header_list
-        """
-        labels, values = scope.get_measure(channel)
-        print(channel)
-        for i in range(len(values)):
-            # label = f"{scope.query_channel_label(channel)} {labels[i]}"
-            label = f"CH{(channel)} {labels[i]}"
+    # def APPEND_SCOPE_LABELS(self, header_list, channel):
+    #     """
+    #         Append labels for the specified channel to the current header_list
+    #     """
+    #     labels, values = scope.get_measure(channel)
+    #     print(channel)
+    #     for i in range(len(values)):
+    #         # label = f"{scope.query_channel_label(channel)} {labels[i]}"
+    #         label = f"CH{(channel)} {labels[i]}"
 
-            header_list.append(label)
+    #         header_list.append(label)
+
+    #     return header_list
+    
+    
+    def APPEND_SCOPE_LABELS(self, header_list, channel, channel_labels=None):
+        """
+        Append scope measurement labels using a human‑readable channel label if available
+        """
+
+        labels, values = scope.get_measure(channel)
+        if not labels:
+            return header_list
+
+        base = (
+            channel_labels.get(channel)
+            if channel_labels and channel in channel_labels
+            else f"CH{channel}"
+        )
+
+        for label in labels:
+            header_list.append(f"{base} {label}")
 
         return header_list
+
     
     def APPEND_SCOPE_CURSOR_LABELS(self, header_list, cursor_set):
         if scope.query_cursor_state(cursor_set):
@@ -924,6 +954,44 @@ class EQUIPMENT_FUNCTIONS():
         output_list = [percent, dim, led, vin, ac.set_freq(vin), vac, iin, pin, pf, thd, vo1, io1, po1, vreg1, ireg1, eff]
 
         return output_list
+    
+
+    def COLLECT_DATA_1CC_LOAD3_PARAMETRICS(
+        self, vin, vout_nom_3, iout_nom_3, scope_channel_list
+    ):
+
+        vac, iin, pin, pf, thd, *_ = self._pm_measurements()
+        vo3, io3, po3 = self._pm_measurements3()
+        f = self._sigfig
+
+        try:    vreg3 = f(100 * (vo3 - vout_nom_3) / vo3, 2)
+        except: vreg3 = "NaN"
+
+        try:    ireg3 = f(100 * (io3 - iout_nom_3*1000) / (iout_nom_3*1000), 3)
+        except: ireg3 = "NaN"
+
+        try:    eff = f(100 * po3 / pin, 2)
+        except: eff = "NaN"
+
+        output = [
+            vin, ac.set_freq(vin),
+            vac, iin, pin, pf, thd,
+            vo3, io3, po3,
+            vreg3, ireg3,
+            eff
+        ]
+
+        
+        scope.stop()
+        for ch in scope_channel_list:
+            try:
+                output += list(scope.get_measure(ch)[1])
+            except:
+                pass
+
+
+        return output
+
     
     def COLLECT_DATA_2CV_1CC_PARAMETRICS(self, vin, vout_nom_1, vout_nom_2, vout_nom_3,
                              iout_nom_1, iout_nom_2, iout_nom_3, vds_channel):

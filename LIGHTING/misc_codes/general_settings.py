@@ -88,6 +88,10 @@ class GENERAL_CONSTANTS():
                             'Vo2_CV2 (V)', 'Io2_CV2 (mA)', 'Po2_CV2 (W)', '%V Reg2_CV2',
                             'Total Po (W)', 'Efficiency (%)']
     
+    HEADER_LIST_1CC_LOAD3_PARAMETRICS = [
+        'Vin (VAC)', 'Freq (Hz)', 'Vac (rms)', 'Iin (mA)', 'Pin (W)', 'PF', '%THD',
+        'Vo3 (V)', 'Io3 (mA)', 'Po3 (W)', '%V Reg3', '%I Reg3', 'Efficiency (%)'
+    ]
 
     HEADER_LIST_1CC_with_dimming = ['Timestamp', 'Dim (V)','ILED (mA)','Vac (rms)', 'Freq (Hz)',
                             'Vin (rms)', 'Iin (mA)', 'Pin (W)', 'PF', '% THD',

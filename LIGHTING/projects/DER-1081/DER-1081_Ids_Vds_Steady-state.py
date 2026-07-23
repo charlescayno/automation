@@ -46,9 +46,14 @@ def main():
     ef = EQUIPMENT_FUNCTIONS()
     sc = ef.SCOPE()
 
+    sc.RESET()
     sc.POSITION_SCALE(time_position=20, time_scale=5E-6)
-    sc.CHANNEL_SETTINGS(state='ON', channel=1, scale=1, position=1, label="IDS", color='LIGHT_BLUE', rel_x_position=30, bandwidth=500, coupling='DCLimit', offset=0)
-    sc.CHANNEL_SETTINGS(state='ON', channel=2, scale=200, position=-4, label="VDS", color='YELLOW', rel_x_position=40, bandwidth=500, coupling='DCLimit', offset=0)
+    sc.RECORD_LENGTH(10_000)
+    sc.CHANNEL_SETTINGS(state='ON', channel=1, scale=1, position=1, offset=0, coupling='DCLimit', bandwidth=500, label="IDS", color='LIGHT_BLUE', rel_x_position=30)
+    sc.CHANNEL_SETTINGS(state='ON', channel=2, scale=200, position=-4, offset=0, coupling='DCLimit', bandwidth=500, label="VDS", color='YELLOW', rel_x_position=40)
+    sc.CHANNEL_SETTINGS(state='OFF', channel=3)
+    sc.CHANNEL_SETTINGS(state='OFF', channel=4)
+    input(">> Verify scope setup, then press ENTER to start test...")
 
     header_list = GENERAL_CONSTANTS.HEADER_LIST_1CV_1CC_PARAMETRICS[:]
     for channel in scope_channel_list:
