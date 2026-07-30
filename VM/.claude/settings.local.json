@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm --version)",
+      "Bash(firebase --version)",
+      "Bash(node purge-logs.js)",
+      "Bash(node purge-logs.js --dry-run)",
+      "Bash(node seed-volunteers.js --dry-run)",
+      "Bash(node seed-volunteers.js)"
+    ]
+  }
+}

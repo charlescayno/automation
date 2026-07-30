@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Viewer</title>
+
+    .js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        th {
+            background: #0078d7;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Excel Viewer</h2>
+
+    <input type="file" id="excelFiles" multiple accept=".xlsx,.xls">
+
+    <div id="output"></div>
+
+    <script>
+
+        document.getElementById("excelFiles").addEventListener("change", async function (e) {
+
+            const output = document.getElementById("output");
+            output.innerHTML = "";
+
+            for (const file of e.target.files) {
+
+                try {
+
+                    const data = await file.arrayBuffer();
+
+                    const workbook = XLSX.read(data, {
+                        type: "array"
+                    });
+
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+
+                    const rows = XLSX.utils.sheet_to_json(sheet, {
+                        header: 1,
+                        defval: ""
+                    });
+
+                    let html = `
+                <h3>${file.name}</h3>
+                <table>
+            `;
+
+                    rows.forEach((row, rowIndex) => {
+
+                        html += "<tr>";
+
+                        row.forEach(cell => {
+
+                            html += rowIndex === 0
+                                ? `<th>${cell}</th>`
+                                : `<td>${cell}</td>`;
+
+                        });
+
+                        html += "</tr>";
+                    });
+
+                    html += "</table><br><hr>";
+
+                    output.innerHTML += html;
+
+                } catch (err) {
+
+                    output.innerHTML += `
+                <p style="color:red;">
+                    ${file.name}: ${err.message}
+                </p>
+            `;
+                }
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>

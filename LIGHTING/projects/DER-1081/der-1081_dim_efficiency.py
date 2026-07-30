@@ -6,7 +6,7 @@ from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *
 ########################################## USER INPUT ##########################################
 # INPUT
-vin_list = [230,265]
+vin_list = [230]
 
 soak_time = 60
 soak_time_per_line = 120
