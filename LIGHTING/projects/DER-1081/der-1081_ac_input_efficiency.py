@@ -1,4 +1,4 @@
-﻿import sys, os
+import sys, os
 _root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
 sys.path.insert(0, os.path.join(_root, 'Lib', 'site-packages'))
 sys.path.insert(0, _root)
@@ -17,7 +17,7 @@ soak_time_per_load = 30
 # soak_time_per_load = 5
 
 # OUTPUT
-vout_nom_1 = 33
+vout_nom_1 = 20
 iout_nom_1 = 1.2
 
 vout_nom_2 = 6
@@ -37,8 +37,8 @@ project_type = "DER" # DER or APPS SUPPORT
 project_name = "DER-1081"
 results_folder = "07 - Test Data"
 test_name = f"Efficiency vs Input Voltage"
-test_name = f"Vds SRFET"
-unit_no = "1"
+# test_name = f"Vds SRFET"
+unit_no = "JW"
 unit = f"Rev C Samples_{unit_no}"
 excel_name = f'{unit_no}_{vout_nom_1}V'
 
@@ -53,13 +53,16 @@ path = path_maker(f'{waveforms_folder}')
 waveforms_folder = path
 ########################################## USER INPUT ##########################################
 
+bypass_scope = input("Bypass scope capture? (y/n): ").strip().lower() == 'y'
+waveform_counter = 0
 
 def main():
-    
+    global waveform_counter
     # scope.write("MMEM:RCL 'C:/Users/Public/Documents/Rohde-Schwarz/RTx/SaveSets/2025/DER-1081/VDS VDS_SRFET V_DIODE.dfl'")
 
     header_list = GENERAL_CONSTANTS.HEADER_LIST_1CV_1CC_PARAMETRICS[:]
-    for channel in scope_channel_list:
+    channels = [] if bypass_scope else scope_channel_list
+    for channel in channels:
         header_list = EQUIPMENT_FUNCTIONS().APPEND_SCOPE_LABELS(header_list, channel)
     print(header_list)
     df = GENERAL_FUNCTIONS().CREATE_DF_WITH_HEADER(header_list)
@@ -68,7 +71,8 @@ def main():
     # EQUIPMENT_FUNCTIONS().SIG_GEN(99, 10000)
     # input()
 
-    EQUIPMENT_FUNCTIONS().SCOPE().RUN()
+    if not bypass_scope:
+        EQUIPMENT_FUNCTIONS().SCOPE().RUN()
     EQUIPMENT_FUNCTIONS().MULTIPLE_ELOAD_CC_ON(iout_nom_1, iout_nom_2, iout_nom_3)
 
     for iout2 in iout2_list:
@@ -76,8 +80,9 @@ def main():
         for vin in vin_list:
 
         
-            EQUIPMENT_FUNCTIONS().SCOPE().RUN()
-            EQUIPMENT_FUNCTIONS().SCOPE().MODE_AUTO()
+            if not bypass_scope:
+                EQUIPMENT_FUNCTIONS().SCOPE().RUN()
+                EQUIPMENT_FUNCTIONS().SCOPE().MODE_AUTO()
             EQUIPMENT_FUNCTIONS().MULTIPLE_ELOAD_CC_ON(iout_nom_1, iout2, iout_nom_3)
             # EQUIPMENT_FUNCTIONS().MULTIPLE_ELOAD_CC_ON(0, 0, 0)
             EQUIPMENT_FUNCTIONS().AC_TURN_ON(vin)
@@ -88,15 +93,17 @@ def main():
             # EQUIPMENT_FUNCTIONS().SIG_GEN(99, 10000)
             # input()
             soak(soak_time)
-            EQUIPMENT_FUNCTIONS().FIND_TRIGGER(channel_to_trigger, channel_trigger_delta)
-            EQUIPMENT_FUNCTIONS().SCOPE().RUN_SINGLE()
-            soak(2)
-            # input(">> Capture waveform and continue? ")
-            filename = f"{test_name} {vin}VAC {vout_nom_1}V{iout_nom_1}A {vout_nom_2}V{iout2}A"
-            EQUIPMENT_FUNCTIONS().SCOPE().STOP()
-            EQUIPMENT_FUNCTIONS().SCOPE().SCOPE_SCREENSHOT(filename, waveforms_folder)
+            if not bypass_scope:
+                EQUIPMENT_FUNCTIONS().FIND_TRIGGER(channel_to_trigger, channel_trigger_delta)
+                EQUIPMENT_FUNCTIONS().SCOPE().RUN_SINGLE()
+                soak(2)
+                # input(">> Capture waveform and continue? ")
+                filename = f"{test_name} {vin}VAC {vout_nom_1}V{iout_nom_1}A {vout_nom_2}V{iout2}A"
+                EQUIPMENT_FUNCTIONS().SCOPE().STOP()
+                EQUIPMENT_FUNCTIONS().SCOPE().SCOPE_SCREENSHOT(filename, waveforms_folder)
+                waveform_counter += 1
 
-            output_list = EQUIPMENT_FUNCTIONS().COLLECT_DATA_1CV_1CC_PARAMETRICS(vin, vout_nom_1, vout_nom_2, iout_nom_1, iout_nom_2, scope_channel_list)
+            output_list = EQUIPMENT_FUNCTIONS().COLLECT_DATA_1CV_1CC_PARAMETRICS(vin, vout_nom_1, vout_nom_2, iout_nom_1, iout2, channels)
             export_to_excel(df, waveforms_folder, output_list, excel_name=excel_name, sheet_name=f"{test_name}", anchor="A1")
             # EQUIPMENT_FUNCTIONS().DISCHARGE_OUTPUT(2)
             
