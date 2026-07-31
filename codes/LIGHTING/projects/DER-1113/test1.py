@@ -15,14 +15,21 @@ from datetime import datetime, timedelta
 from time import sleep
 import re
 
-from colorama import Fore, Style, init
-from tqdm import tqdm
-
-init(autoreset=True)
-
 _root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")
 sys.path.insert(0, os.path.join(_root, "Lib", "site-packages"))
 sys.path.insert(0, _root)
+
+try:
+    from colorama import Fore, Style, init
+    init(autoreset=True)
+except ImportError:
+    pass
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(iterable=None, *args, **kwargs):
+        return iterable if iterable is not None else range(kwargs.get('total', 0))
 
 from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *

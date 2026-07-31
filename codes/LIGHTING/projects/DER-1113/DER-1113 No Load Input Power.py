@@ -15,14 +15,18 @@ from datetime import datetime, timedelta
 from time import sleep
 import re
 
-from colorama import Fore, Style, init
-from tqdm import tqdm
-
-init(autoreset=True)
-
 _root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")
 sys.path.insert(0, os.path.join(_root, "Lib", "site-packages"))
 sys.path.insert(0, _root)
+
+from colorama import Fore, Style, init
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(iterable=None, *args, **kwargs):
+        return iterable if iterable is not None else range(kwargs.get('total', 0))
+
+init(autoreset=True)
 
 from misc_codes.equipment_settings import *
 from misc_codes.general_settings import *
@@ -93,19 +97,22 @@ while True:
 
     error("Invalid selection.")
 
-while True:
-    title("\nEnter unit ID:")
-    unit_id = input("Unit ID: ").strip()
-    if unit_id:
-        unit_id = re.sub(r'[^A-Za-z0-9_-]', '_', unit_id); break
-    error("Unit ID cannot be empty.")
+unit_id = os.environ.get("DUT_UNIT_ID", "").strip()
+if not unit_id:
+    while True:
+        title("\nEnter unit ID:")
+        unit_id = input("Unit ID: ").strip()
+        if unit_id:
+            break
+        error("Unit ID cannot be empty.")
+unit_id = re.sub(r'[^A-Za-z0-9_-]', '_', unit_id)
 
 # ======================================================================================
 # PARAMETERS
 # ======================================================================================
 vin_list = [180, 200, 220, 230, 240, 265]
 vin_list = [180, 230, 265]
-# vin_list = [230]
+vin_list = [230]
 
 PIN_LIMIT = 0.15  # Watts
 
@@ -221,6 +228,8 @@ def main():
 
     ef.DISCHARGE_OUTPUT(2)
     success("\nTEST COMPLETED\n")
+    if not all_pass:
+        sys.exit(1)
 
 # ======================================================================================
 if __name__ == "__main__":
