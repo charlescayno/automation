@@ -1,10 +1,11 @@
 ##################################################################################
 """IMPORT DEPENDENCIES"""
 from time import sleep
-from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, LecroyScope, LEDControl, Keithley_DC_2230G, RnS_DC_HMPSeries, Tektronix_SigGen_AFG31000, Keysight_33500B, DCSource
+from powi.equipment import ACSource, PowerMeter, ElectronicLoad, Oscilloscope, LecroyScope, LEDControl, Keithley_DC_2230G, RnS_DC_HMPSeries, Tektronix_SigGen_AFG31000, Keysight_33500B, DCSource, Arduino, EMI, Yokogawa_Oscilloscope_DLM5058, Fluke_BDMM_8808A
 from powi.equipment import headers, create_folder, footers, waveform_counter, soak, convert_argv_to_int_list, tts, prompt, roundup, export_df_to_excel
 from misc_codes.equipment_address import *
 from misc_codes.general_settings import *
+from misc_codes.magna_power import MagnaPowerSL1000
 from itertools import permutations
 ##################################################################################
 
@@ -30,7 +31,17 @@ dc      = _connect("DC Source",          lambda: DCSource(EQUIPMENT_ADDRESS.DC_S
 dimmer  = _connect("Dimmer",             lambda: RnS_DC_HMPSeries(EQUIPMENT_ADDRESS.DC_SOURCE_DIMMER))
 scope   = _connect("Oscilloscope",       lambda: Oscilloscope(EQUIPMENT_ADDRESS.SCOPE))
 led_ctrl = _connect("LED Control",       lambda: LEDControl())
+
+arduino = _connect("Arduino",            lambda: Arduino(EQUIPMENT_ADDRESS.ARDUINO))
+lscope  = _connect("Lecroy Scope",       lambda: LecroyScope(EQUIPMENT_ADDRESS.LECROY_SCOPE))
+emi     = _connect("EMI Tester",         lambda: EMI(EQUIPMENT_ADDRESS.EMI_TESTER))
+yscope  = _connect("Yokogawa Scope",     lambda: Yokogawa_Oscilloscope_DLM5058(EQUIPMENT_ADDRESS.YOKOGAWA_SCOPE))
+keysight = _connect("Keysight 33500B",   lambda: Keysight_33500B(EQUIPMENT_ADDRESS.KEYSIGHT_33500B))
+keithley = _connect("Keithley 2230G",    lambda: Keithley_DC_2230G(EQUIPMENT_ADDRESS.KEITHLEY_2230G))
+fluke    = _connect("Fluke 8808A",       lambda: Fluke_BDMM_8808A(EQUIPMENT_ADDRESS.FLUKE_8808A))
+hvdc     = MagnaPowerSL1000(getattr(EQUIPMENT_ADDRESS, "HV_DC_SOURCE", None))  # connects on first use
 print("Done.\n")
+
 
 # try:
 #     from i2c_reader import read_eeprom as _read_eeprom
@@ -340,6 +351,24 @@ class EQUIPMENT_FUNCTIONS():
             voltage = 10
         dc.voltage = voltage
         dc.turn_on()
+
+    def HVDC_TURN_ON(self, voltage, current_limit=1.5, slew_v_per_s=None):
+        """Magna-Power SL1000-1.5. With slew_v_per_s the output starts at 0 V and is software-ramped."""
+        hvdc.current = current_limit
+        if slew_v_per_s:
+            if not hvdc.output_state:
+                hvdc.voltage = 0
+                hvdc.turn_on()
+            hvdc.ramp_to(voltage, slew_v_per_s)
+        else:
+            hvdc.voltage = voltage
+            hvdc.turn_on()
+
+    def HVDC_TURN_OFF(self):
+        hvdc.turn_off()
+
+    def HVDC_MEASUREMENTS(self):
+        return hvdc.voltage, hvdc.current
 
     def DC_SOURCE_TURN_OFF(self):
         dc.turn_off()
